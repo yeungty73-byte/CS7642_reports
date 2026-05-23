@@ -1,0 +1,35 @@
+[07:08:52] config=configs/config.yaml | seed=7641 | quick=False
+[07:08:52] sample_size=20000 | test_size=0.2 | cv_folds=5
+[07:08:52]    data loaded: train=16000 test=4000 features=54 (0.7s)
+[07:08:52] II. data screening + leakage probes
+[07:08:53]    dummy_acc=0.372, shuffled_acc=0.484, split_disjoint=True
+[07:08:53] III. k-fold CV hyperparameter tuning
+[07:08:53]    tuning dt (display=Decision Tree)
+[07:09:28]       done in 34.6s | best macroF1=0.6322 | params={'ccp_alpha': 0.0001, 'max_depth': None}
+[07:09:28]    tuning knn (display=k-Nearest Neighbours)
+[07:09:54]       done in 26.2s | best macroF1=0.6566 | params={'n_neighbors': 1, 'weights': 'uniform'}
+[07:09:54]    tuning svm (display=Support Vector Machine)
+[07:12:02]       done in 128.0s | best macroF1=0.6085 | params={'kernel': 'rbf', 'C': 10.0, 'gamma': 0.1}
+[07:12:02]    tuning mlp_sk (display=MLP (sklearn, SGD))
+[07:21:32]       done in 570.3s | best macroF1=0.5692 | params={'hidden_layer_sizes': (128, 64), 'alpha': 0.001}
+[07:21:32]    tuning mlp_pt (display=MLP (PyTorch, SGD))
+[07:31:59]       done in 627.0s | best macroF1=0.5866 | params={'hidden_dims': (128, 64), 'activation': 'relu'}
+[07:31:59] IV.A learning curves
+[07:32:00]    dt learning curve: final val=0.6382
+[07:32:05]    knn learning curve: final val=0.6410
+[07:33:04]    svm learning curve: final val=0.6529
+[07:33:34]    mlp_sk learning curve: final val=0.5157
+[07:34:13]    mlp_pt learning curve: final val=0.5873
+[07:34:14] IV.B model-complexity curves
+[07:34:20]    dt MC: x=ccp_alpha best val=0.6322
+[07:35:03]    knn MC: x=n_neighbors best val=0.6566
+[07:35:29]    svm MC: x=C best val=0.6085
+[07:37:12]    mlp_sk MC: x=hidden_layer_sizes best val=0.5692
+[07:39:21]    mlp_pt MC: x=hidden_dims best val=0.5866
+[07:39:22] V. final fit + held-out test eval
+[07:39:22]    dt: fit 0.2s, pred 0.00s
+[07:39:22]    knn: fit 0.0s, pred 0.42s
+[07:39:33]    svm: fit 8.8s, pred 2.23s
+[07:39:43]    mlp_sk: fit 9.9s, pred 0.00s
+[07:39:48]    mlp_pt: fit 4.6s, pred 0.00s
+[07:39:50] pipeline complete.

@@ -1,0 +1,49 @@
+{
+  "dt": {
+    "best_params": {
+      "ccp_alpha": 0.0001,
+      "max_depth": null
+    },
+    "best_macro_f1_cv": 0.6321522996587835,
+    "tune_seconds": 34.64335141299989
+  },
+  "knn": {
+    "best_params": {
+      "n_neighbors": 1,
+      "weights": "uniform"
+    },
+    "best_macro_f1_cv": 0.6565536833987744,
+    "tune_seconds": 26.19875355100021
+  },
+  "svm": {
+    "best_params": {
+      "kernel": "rbf",
+      "C": 10.0,
+      "gamma": 0.1
+    },
+    "best_macro_f1_cv": 0.6085394736814589,
+    "tune_seconds": 127.96618241600004
+  },
+  "mlp_sk": {
+    "best_params": {
+      "hidden_layer_sizes": [
+        128,
+        64
+      ],
+      "alpha": 0.001
+    },
+    "best_macro_f1_cv": 0.56920695034048,
+    "tune_seconds": 570.2929957350002
+  },
+  "mlp_pt": {
+    "best_params": {
+      "hidden_dims": [
+        128,
+        64
+      ],
+      "activation": "relu"
+    },
+    "best_macro_f1_cv": 0.5866120962343565,
+    "tune_seconds": 626.9645596110001
+  }
+}

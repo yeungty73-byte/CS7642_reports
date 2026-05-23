@@ -1,0 +1,11 @@
+{
+  "dummy_accuracy": 0.37225,
+  "dummy_balanced_accuracy": 0.15027405614240147,
+  "dummy_macro_f1": 0.1497405580849768,
+  "chance_accuracy_majority": 0.487625,
+  "shuffled_label_accuracy": 0.484,
+  "shuffled_label_macro_f1": 0.10603703864430256,
+  "split_disjoint": true,
+  "train_test_overlap_count": 0,
+  "notes": []
+}

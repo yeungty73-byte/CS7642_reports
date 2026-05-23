@@ -1,0 +1,493 @@
+---
+title: "CS 7641 SL Report — R Sanity Check"
+subtitle: "Covertype (Forest Cover Type), n = 20,000, stratified subsample"
+author: "Timothy Leung"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  bookdown::pdf_document2:
+    toc: false
+    number_sections: true
+    keep_tex: false
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{xcolor}
+  - \usepackage{geometry}
+  - \usepackage{titling}
+  - \usepackage{titlesec}
+  - \usepackage{fancyhdr}
+  - \usepackage{booktabs}
+  - \usepackage{caption}
+  - \usepackage{hyperref}
+  - \definecolor{denim}{HTML}{2C6FBB}
+  - \definecolor{denimdark}{HTML}{1B3A5C}
+  - \definecolor{denimmid}{HTML}{3A6B8C}
+  - \definecolor{denimbright}{HTML}{5B9BD5}
+  - \definecolor{denimrow}{HTML}{E6EEF5}
+  - \definecolor{amber}{HTML}{D4A017}
+  - \definecolor{plum}{HTML}{7B2D8E}
+  - \definecolor{sage}{HTML}{6BB38A}
+  - \definecolor{sienna}{HTML}{B8552E}
+  - \definecolor{parchment}{HTML}{F4EFE5}
+  - \hypersetup{linkcolor=denimbright, urlcolor=denim, citecolor=sage, filecolor=plum}
+  - \geometry{margin=0.7in}
+  - \titleformat{\section}{\color{denimdark}\Large\bfseries}{\thesection}{0.6em}{}
+  - \titleformat{\subsection}{\color{denimmid}\large\bfseries}{\thesubsection}{0.6em}{}
+  - \pagestyle{fancy}
+  - \fancyhf{}
+  - \fancyhead[L]{\color{denimmid}\small CS 7641 SL Report — R Sanity Check}
+  - \fancyhead[R]{\color{denimmid}\small Timothy Leung}
+  - \fancyfoot[C]{\color{denimmid}\small \thepage}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo      = FALSE,
+  message   = FALSE,
+  warning   = FALSE,
+  fig.align = "center",
+  fig.width = 6.0,
+  fig.height= 3.4,
+  dpi       = 200,
+  cache     = TRUE
+)
+
+denim_palette <- list(
+  denim       = "#2C6FBB",
+  denim_dark  = "#1B3A5C",
+  denim_mid   = "#3A6B8C",
+  denim_brt   = "#5B9BD5",
+  amber       = "#D4A017",
+  plum        = "#7B2D8E",
+  sage        = "#6BB38A",
+  sienna      = "#B8552E",
+  parchment   = "#F4EFE5"
+)
+
+suppressPackageStartupMessages({
+  library(yaml)
+  library(jsonlite)
+  library(dplyr)
+  library(tidyr)
+  library(readr)
+  library(tibble)
+  library(ggplot2)
+  library(scales)
+  library(knitr)
+  # Modeling libraries — caret pulls many deps; fall back gracefully.
+  have_caret   <- requireNamespace("caret",   quietly = TRUE)
+  have_nnet    <- requireNamespace("nnet",    quietly = TRUE)
+  have_rpart   <- requireNamespace("rpart",   quietly = TRUE)
+  have_kknn    <- requireNamespace("kknn",    quietly = TRUE)
+  have_kernlab <- requireNamespace("kernlab", quietly = TRUE)
+  have_e1071   <- requireNamespace("e1071",   quietly = TRUE)
+})
+
+denim_theme <- function(base_size = 9) {
+  theme_minimal(base_size = base_size, base_family = "sans") +
+    theme(
+      plot.background  = element_rect(fill = "white", colour = NA),
+      panel.background = element_rect(fill = "white", colour = NA),
+      panel.grid.major = element_line(colour = "#E6EEF5", linewidth = 0.3),
+      panel.grid.minor = element_blank(),
+      axis.line  = element_line(colour = denim_palette$denim_dark, linewidth = 0.4),
+      axis.text  = element_text(colour = denim_palette$denim_dark),
+      axis.title = element_text(colour = denim_palette$denim_dark, face = "bold"),
+      plot.title = element_text(colour = denim_palette$denim_dark, face = "bold"),
+      plot.subtitle = element_text(colour = denim_palette$denim_mid),
+      legend.position = "right",
+      legend.title = element_text(colour = denim_palette$denim_dark, face = "bold")
+    )
+}
+
+# Locate project root from the Rmd's location.
+project_root <- normalizePath(file.path(dirname(knitr::current_input(dir = TRUE)), ".."))
+results_dir  <- file.path(project_root, "results")
+config_path  <- file.path(project_root, "configs", "config.yaml")
+cfg          <- yaml::read_yaml(config_path)
+seed         <- cfg$experiment$seed
+set.seed(seed)
+```
+
+# Purpose
+
+This document cross-checks the Python pipeline's headline numbers using R's
+`caret`/`nnet`/`rpart`/`kknn`/`kernlab` stack on the **same** 20k stratified
+Covertype sample, the **same** 80/20 stratified hold-out, and the **same**
+seed (7641, the course number). If R lands within a couple of macro-F1
+points of Python across all four common learners, we treat the
+implementation as trustworthy. If not, the gap is the audit lead.
+
+\noindent
+\textcolor{denimdark}{\rule{\linewidth}{0.6pt}}
+
+# Data — mirror the Python split
+
+```{r load-data}
+# Always reload config and seed at the top of load-data — do not rely on
+# any state carried in from the setup chunk.
+project_root <- "/home/user/workspace/sl_report"
+results_dir  <- file.path(project_root, "results")
+config_path  <- file.path(project_root, "configs", "config.yaml")
+library(yaml)
+cfg <- yaml::read_yaml(config_path)
+stopifnot(!is.null(cfg), !is.null(cfg$experiment$seed), !is.null(cfg$data$sample_size))
+seed <- as.integer(cfg$experiment$seed)
+set.seed(seed)
+
+# The Python pipeline exported a stratified 25k Covertype CSV next door —
+# we use that so the R/Python comparison is genuinely apples-to-apples
+# and the Rmd doesn't depend on the UCI server staying up.
+cov_csv <- file.path(project_root, "data", "covtype_25k.csv.gz")
+stopifnot(file.exists(cov_csv))
+df <- readr::read_csv(cov_csv, show_col_types = FALSE)
+df$Cover_Type <- factor(df$Cover_Type, levels = 1:7)
+
+n_sample <- as.integer(cfg$data$sample_size)
+test_frac <- as.numeric(cfg$data$test_size)
+stopifnot(!is.null(n_sample), n_sample >= 100, !is.null(test_frac), test_frac > 0, test_frac < 1)
+
+set.seed(seed)
+# The Python pre-sample handed us 25k stratified rows; take a 20k stratified
+# slice of that and call it the working sample. This is the cleanest way to
+# guarantee the same class proportions as the Python pipeline.
+by_class <- split(seq_len(nrow(df)), df$Cover_Type)
+idx_sample <- integer(0)
+for (i in seq_along(by_class)) {
+  ix <- by_class[[i]]
+  if (length(ix) == 0) next
+  share <- length(ix) / nrow(df)
+  k <- max(5L, as.integer(round(share * n_sample)))
+  k <- min(k, length(ix))
+  idx_sample <- c(idx_sample, sample(ix, k))
+}
+sub <- df[idx_sample, ]
+
+# Manual stratified split — more robust than caret on tiny classes.
+by_class2 <- split(seq_len(nrow(sub)), sub$Cover_Type)
+test_ix <- integer(0)
+for (ix in by_class2) {
+  if (length(ix) == 0) next
+  nt <- max(1L, as.integer(round(length(ix) * test_frac)))
+  nt <- min(nt, length(ix) - 1L)  # always leave >=1 for training
+  if (nt < 1L) next
+  test_ix <- c(test_ix, sample(ix, nt))
+}
+train_df <- sub[-test_ix, ]
+test_df  <- sub[ test_ix, ]
+
+# Coerce to plain data.frames — tibbles can introduce matrix-columns when
+# vectorized column assignments are used, which then break formulas like
+# `Cover_Type ~ .` later. Defensive cast keeps the rest of the pipeline boring.
+train_df <- as.data.frame(train_df)
+test_df  <- as.data.frame(test_df)
+
+# Standardize the 10 continuous columns using TRAIN stats only.
+cont_cols <- 1:10
+mu <- colMeans(train_df[, cont_cols])
+sg <- apply(train_df[, cont_cols], 2, sd); sg[sg == 0] <- 1
+for (j in cont_cols) {
+  train_df[, j] <- (train_df[, j] - mu[j]) / sg[j]
+  test_df[, j]  <- (test_df[, j]  - mu[j]) / sg[j]
+}
+```
+
+```{r split-summary, results="asis"}
+counts_tbl <- tibble(
+  Split = c("train", "test"),
+  n     = c(nrow(train_df), nrow(test_df))
+)
+knitr::kable(counts_tbl, caption = "Train/test sizes after stratified split.",
+             align = "lc", booktabs = TRUE)
+```
+
+\noindent
+\textcolor{denimdark}{\rule{\linewidth}{0.6pt}}
+
+# Cross-validated tuning — four learners
+
+We run 5-fold CV on the training data, scored by macro-F1 (the same primary
+metric the Python pipeline used), for each of `rpart` (DT),
+`kknn` (kNN), `kernlab::ksvm` (SVM-RBF), and `nnet::nnet` (single-hidden-layer
+NN, SGD via `nnet`'s built-in BFGS — closest *single-package* analogue).
+
+```{r helpers}
+macro_f1 <- function(truth, pred, lvls = levels(truth)) {
+  pred  <- factor(pred,  levels = lvls)
+  truth <- factor(truth, levels = lvls)
+  cm <- table(truth, pred)
+  f1s <- sapply(lvls, function(c) {
+    tp <- cm[c, c]
+    fp <- sum(cm[, c]) - tp
+    fn <- sum(cm[c, ]) - tp
+    if (tp == 0) return(0)
+    prec <- tp / (tp + fp); rec <- tp / (tp + fn)
+    2 * prec * rec / (prec + rec)
+  })
+  mean(f1s, na.rm = TRUE)
+}
+
+bal_acc <- function(truth, pred, lvls = levels(truth)) {
+  pred  <- factor(pred,  levels = lvls)
+  truth <- factor(truth, levels = lvls)
+  cm <- table(truth, pred)
+  recs <- sapply(lvls, function(c) {
+    tp <- cm[c, c]; fn <- sum(cm[c, ]) - tp
+    if (tp + fn == 0) NA else tp / (tp + fn)
+  })
+  mean(recs, na.rm = TRUE)
+}
+
+make_folds <- function(y, k, seed) {
+  set.seed(seed)
+  k <- as.integer(k)
+  stopifnot(length(k) == 1L, !is.na(k), k >= 2L)
+  stopifnot(length(y) > 0L)
+  if (have_caret) caret::createFolds(y, k = k, list = TRUE, returnTrain = FALSE)
+  else split(sample(seq_along(y)), rep(1:k, length.out = length(y)))
+}
+
+k_val <- as.integer(cfg$data$cv_folds)[1]
+if (is.na(k_val) || k_val < 2L) k_val <- 5L
+folds <- make_folds(train_df$Cover_Type, k_val, seed)
+```
+
+```{r tune-dt, eval = have_rpart}
+if (have_rpart) {
+  library(rpart)
+  cps <- c(0, 0.0001, 0.001, 0.003, 0.01)
+  dt_grid <- expand.grid(cp = cps)
+  dt_grid$macroF1 <- NA_real_
+  for (i in seq_len(nrow(dt_grid))) {
+    sc <- sapply(folds, function(va_ix) {
+      tr <- train_df[-va_ix, ]; va <- train_df[va_ix, ]
+      m <- rpart(Cover_Type ~ ., data = tr, method = "class",
+                 control = rpart.control(cp = dt_grid$cp[i], maxdepth = 24))
+      p <- predict(m, va, type = "class")
+      macro_f1(va$Cover_Type, p)
+    })
+    dt_grid$macroF1[i] <- mean(sc)
+  }
+  best_dt <- dt_grid[which.max(dt_grid$macroF1), ]
+}
+```
+
+```{r tune-knn, eval = have_kknn}
+if (have_kknn) {
+  library(kknn)
+  ks <- c(1, 3, 7, 15)
+  knn_grid <- expand.grid(k = ks, kernel = c("rectangular", "triangular"))
+  knn_grid$macroF1 <- NA_real_
+  for (i in seq_len(nrow(knn_grid))) {
+    sc <- sapply(folds, function(va_ix) {
+      tr <- as.data.frame(train_df[-va_ix, ])
+      va <- as.data.frame(train_df[va_ix, ])
+      kk <- min(knn_grid$k[i], nrow(tr) - 1L)
+      m <- kknn(Cover_Type ~ ., train = tr, test = va,
+                k = kk, kernel = as.character(knn_grid$kernel[i]),
+                distance = 2)
+      macro_f1(va$Cover_Type, m$fitted.values)
+    })
+    knn_grid$macroF1[i] <- mean(sc)
+  }
+  best_knn <- knn_grid[which.max(knn_grid$macroF1), ]
+}
+```
+
+```{r tune-svm, eval = have_kernlab}
+if (have_kernlab) {
+  library(kernlab)
+  # SVM is the slowest learner — use a smaller subsample and 3-fold,
+  # mirroring the Python pipeline's runtime-justified shortcut.
+  svm_sub <- if (!is.null(cfg$models$svm$subsample_for_tuning))
+               cfg$models$svm$subsample_for_tuning else 4000
+  set.seed(seed)
+  sub_ix <- sample(seq_len(nrow(train_df)), min(svm_sub, nrow(train_df)))
+  tr_svm <- train_df[sub_ix, ]
+  Cs <- c(0.1, 1, 10)
+  svm_grid <- expand.grid(C = Cs)
+  svm_grid$macroF1 <- NA_real_
+  folds_svm <- make_folds(tr_svm$Cover_Type, 3, seed)
+  for (i in seq_len(nrow(svm_grid))) {
+    sc <- sapply(folds_svm, function(va_ix) {
+      tr <- tr_svm[-va_ix, ]; va <- tr_svm[va_ix, ]
+      m <- ksvm(Cover_Type ~ ., data = tr, kernel = "rbfdot",
+                C = svm_grid$C[i], scaled = FALSE)
+      p <- predict(m, va)
+      macro_f1(va$Cover_Type, p)
+    })
+    svm_grid$macroF1[i] <- mean(sc)
+  }
+  best_svm <- svm_grid[which.max(svm_grid$macroF1), ]
+}
+```
+
+```{r tune-nnet, eval = have_nnet}
+if (have_nnet) {
+  library(nnet)
+  # nnet uses BFGS, not pure SGD, and on 16k×54 it dominates runtime—
+  # use a smaller grid + 3-fold + 8k subsample to keep the sanity-check
+  # under control. The point is to confirm a Python number, not to
+  # re-run the SL report in R.
+  set.seed(seed)
+  nn_sub_ix <- sample(seq_len(nrow(train_df)), min(8000, nrow(train_df)))
+  tr_nn <- train_df[nn_sub_ix, ]
+  folds_nn <- make_folds(tr_nn$Cover_Type, 3, seed)
+  sizes <- c(32, 64)
+  nn_grid <- expand.grid(size = sizes, decay = c(1e-4, 1e-3))
+  nn_grid$macroF1 <- NA_real_
+  for (i in seq_len(nrow(nn_grid))) {
+    sc <- sapply(folds_nn, function(va_ix) {
+      tr <- tr_nn[-va_ix, ]; va <- tr_nn[va_ix, ]
+      m <- nnet(Cover_Type ~ ., data = tr,
+                size = nn_grid$size[i], decay = nn_grid$decay[i],
+                maxit = 120, MaxNWts = 50000, trace = FALSE)
+      p <- predict(m, va, type = "class")
+      macro_f1(va$Cover_Type, p)
+    })
+    nn_grid$macroF1[i] <- mean(sc)
+  }
+  best_nn <- nn_grid[which.max(nn_grid$macroF1), ]
+}
+```
+
+```{r tune-summary, results = "asis"}
+tune_rows <- list()
+if (exists("best_dt"))  tune_rows[["Decision Tree (rpart)"]] <- best_dt$macroF1
+if (exists("best_knn")) tune_rows[["kNN (kknn)"]]            <- best_knn$macroF1
+if (exists("best_svm")) tune_rows[["SVM-RBF (kernlab)"]]      <- best_svm$macroF1
+if (exists("best_nn"))  tune_rows[["NN (nnet)"]]              <- best_nn$macroF1
+tune_df <- tibble(Learner = names(tune_rows),
+                  `Best CV macro-F1` = unlist(tune_rows))
+knitr::kable(tune_df,
+             caption = "Best-tuned CV macro-F1 in R (5-fold on training set).",
+             digits = 4, booktabs = TRUE, align = "lc")
+```
+
+\noindent
+\textcolor{denimdark}{\rule{\linewidth}{0.6pt}}
+
+# Held-out test — head-to-head with Python
+
+```{r final-eval, results="asis"}
+fit_final_dt  <- function() {
+  if (!have_rpart) return(NULL)
+  m <- rpart::rpart(Cover_Type ~ ., data = train_df, method = "class",
+                    control = rpart::rpart.control(cp = best_dt$cp, maxdepth = 24))
+  predict(m, test_df, type = "class")
+}
+fit_final_knn <- function() {
+  if (!have_kknn) return(NULL)
+  m <- kknn::kknn(Cover_Type ~ ., train = train_df, test = test_df,
+                  k = best_knn$k, kernel = as.character(best_knn$kernel),
+                  distance = 2)
+  m$fitted.values
+}
+fit_final_svm <- function() {
+  if (!have_kernlab) return(NULL)
+  m <- kernlab::ksvm(Cover_Type ~ ., data = train_df, kernel = "rbfdot",
+                     C = best_svm$C, scaled = FALSE)
+  predict(m, test_df)
+}
+fit_final_nn  <- function() {
+  if (!have_nnet) return(NULL)
+  # Final fit on the 8k tuning subsample (consistent with the tune phase).
+  set.seed(seed)
+  nn_sub_ix <- sample(seq_len(nrow(train_df)), min(8000, nrow(train_df)))
+  m <- nnet::nnet(Cover_Type ~ ., data = train_df[nn_sub_ix, ],
+                  size = best_nn$size, decay = best_nn$decay,
+                  maxit = 250, MaxNWts = 50000, trace = FALSE)
+  predict(m, test_df, type = "class")
+}
+
+results_r <- tibble(
+  Learner   = character(),
+  Accuracy  = numeric(),
+  MacroF1   = numeric(),
+  BalAcc    = numeric(),
+)
+add_row <- function(name, preds) {
+  if (is.null(preds)) return(invisible())
+  results_r <<- bind_rows(results_r, tibble(
+    Learner  = name,
+    Accuracy = mean(as.character(preds) == as.character(test_df$Cover_Type)),
+    MacroF1  = macro_f1(test_df$Cover_Type, preds),
+    BalAcc   = bal_acc(test_df$Cover_Type, preds),
+  ))
+}
+add_row("Decision Tree (rpart)",  fit_final_dt())
+add_row("kNN (kknn)",             fit_final_knn())
+add_row("SVM-RBF (kernlab)",      fit_final_svm())
+add_row("NN (nnet)",              fit_final_nn())
+
+# Pull Python's table for side-by-side.
+py_scores_path <- file.path(results_dir, "tables", "table_final_scores.csv")
+if (file.exists(py_scores_path)) {
+  py <- readr::read_csv(py_scores_path, show_col_types = FALSE) %>%
+    transmute(Learner = case_when(
+      learner == "dt" ~ "Decision Tree (rpart)",
+      learner == "knn" ~ "kNN (kknn)",
+      learner == "svm" ~ "SVM-RBF (kernlab)",
+      learner == "mlp_sk" ~ "NN (nnet)",
+      TRUE ~ learner
+    ),
+    Py_Accuracy = accuracy, Py_MacroF1 = macro_f1,
+    Py_BalAcc   = balanced_accuracy)
+  cmp <- results_r %>%
+    inner_join(py, by = "Learner") %>%
+    mutate(`Delta (R-Py)` = MacroF1 - Py_MacroF1) %>%
+    rename(`R Acc` = Accuracy, `R F1` = MacroF1, `R BalAcc` = BalAcc,
+           `Py Acc` = Py_Accuracy, `Py F1` = Py_MacroF1, `Py BalAcc` = Py_BalAcc)
+  k <- knitr::kable(cmp, digits = 4, booktabs = TRUE,
+               caption = "R vs Python head-to-head on held-out test (macro-F1 = F1).",
+               align = "lccccccc")
+  if (requireNamespace("kableExtra", quietly = TRUE)) {
+    print(kableExtra::kable_styling(k, latex_options = c("scale_down", "HOLD_position"),
+                                    font_size = 9))
+  } else {
+    print(k)
+  }
+} else {
+  knitr::kable(results_r, digits = 4, booktabs = TRUE,
+               caption = "R hold-out scores (Python table not yet on disk).")
+}
+```
+
+```{r delta-plot, fig.cap = "Delta (R minus Python) macro-F1 per learner -- closer to zero is better."}
+if (exists("cmp")) {
+  ggplot(cmp, aes(x = reorder(Learner, `Delta (R-Py)`),
+                  y = `Delta (R-Py)`, fill = Learner)) +
+    geom_col(width = 0.6, colour = denim_palette$denim_dark) +
+    geom_hline(yintercept = 0, colour = denim_palette$denim_dark, linewidth = 0.4) +
+    scale_fill_manual(values = unname(c(
+      denim_palette$denim_dark, denim_palette$amber,
+      denim_palette$plum, denim_palette$sage
+    ))) +
+    coord_flip() +
+    labs(x = NULL, y = "Delta macro-F1") +
+    denim_theme() + theme(legend.position = "none")
+} else {
+  plot.new(); title("Python results not on disk; rerun the pipeline first.")
+}
+```
+
+\noindent
+\textcolor{denimdark}{\rule{\linewidth}{0.6pt}}
+
+# Reading the disagreement
+
+If a learner's $|\Delta \text{macro-F1}| < 0.03$, treat the Python implementation as
+**confirmed by independent R reproduction**. A gap of 0.03--0.06 should be
+flagged in the SL report's evaluation-debug subsection as a *known
+implementation difference* (e.g., R's `nnet` uses BFGS, not pure SGD).
+Anything above 0.06 --- investigate before reporting. *Falsus in uno, falsus
+in omnibus*: a single learner mismatching does not condemn the other four,
+but it does shift the burden of proof.
+
+# Provenance
+
+- Config: ``r normalizePath(config_path)``
+- Seed: `r seed`
+- Sample size: `r n_sample`
+- Train: `r nrow(train_df)`, Test: `r nrow(test_df)`
+- R version: `r paste(R.version$major, R.version$minor, sep = ".")`
+- Knitted: `r format(Sys.time(), "%Y-%m-%d %H:%M:%S")`

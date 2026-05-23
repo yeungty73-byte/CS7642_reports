@@ -1,0 +1,330 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb}
+\usepackage{textcomp}
+
+\definecolor{denim}{HTML}{2C6FBB}
+\definecolor{denimdark}{HTML}{1B3A5C}
+\definecolor{denimmid}{HTML}{3A6B8C}
+\definecolor{denimrow}{HTML}{E6EEF5}
+\definecolor{plum}{HTML}{7B2D8E}
+
+\hypersetup{colorlinks=true, linkcolor=denim, urlcolor=denim, citecolor=denim}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{denimmid}CS7641 SL Reproducibility --- Timothy Leung}
+\fancyhead[R]{\footnotesize\color{denimmid}gtID 904150400 \,\textbar\, \texttt{tleung37@gatech.edu}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize\color{denimdark},
+  keywordstyle=\color{denim}\bfseries,
+  commentstyle=\color{denimmid}\itshape,
+  stringstyle=\color{plum},
+  showstringspaces=false, breaklines=true, frame=single,
+  rulecolor=\color{denimrow}, framesep=3pt, basewidth=0.5em,
+}
+
+\title{\color{denimdark}\textbf{Reproducibility Sheet --- CS7641 Supervised Learning Report}\\
+       \large Covertype, five-learner comparison, Summer 2026}
+\author{Timothy Leung \\ \texttt{tleung37@gatech.edu} \quad gtID 904150400 \\
+        Georgia Institute of Technology, OMSCS}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\section*{1.\ Overleaf project (read-only)}
+\textbf{Overleaf project:} \href{https://www.overleaf.com/project/6a11cdb664b3e344a5bd3a25}{\texttt{overleaf.com/project/6a11cdb664b3e344a5bd3a25}}
+
+The project is hosted on Georgia Tech Enterprise Overleaf
+(\href{https://overleaf.gatech.edu}{overleaf.gatech.edu}); the read-only link
+above grants the grader full revision-history access without write
+permission. Revision timeline is intact from first commit through final
+submission build.
+
+\section*{2.\ GitHub commit hash (single SHA)}
+\textbf{Final commit SHA:} \texttt{e287cb055afd8f20edb1646ad53574f57676adb8}\\
+\textbf{Repository:} \href{https://github.gatech.edu/tleung37/CS7641_ml_report1}{\texttt{github.gatech.edu/tleung37/CS7641\_ml\_report1}} (GT Enterprise, private)\\
+\textbf{File-link pattern:} \texttt{<repo>/blob/main/<filename>} --- directory layout is stable across revisions (only SHAs and minor edits change)\\
+\textbf{Branch:} \texttt{main}\\
+\textbf{Tag:} \texttt{v1.0-submission}
+
+The repository contains every script that produces every figure, every
+table, and every number in the report. Branch and commit history are intact
+and available for review.
+
+\section*{3.\ Exact run instructions (standard Linux machine)}
+
+\subsection*{3.1\ Environment setup}
+Tested on Ubuntu 22.04 LTS, Python 3.11, R 4.4.1. Approximate end-to-end
+runtime: 25--30 minutes on a 4-core CPU laptop (no GPU required).
+
+\begin{lstlisting}[language=bash]
+# Clone the repository
+git clone https://github.gatech.edu/tleung37/CS7641_ml_report1.git
+cd CS7641_ml_report1
+git checkout fb10855dc58c147f4da7492d6a9d21dcf2e008e3   # or: git checkout main
+
+# Python environment
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# R environment (for the optional sanity-check; not required to grade the SL report)
+Rscript -e 'install.packages(c("caret","rpart","kknn","kernlab","nnet",
+            "rmarkdown","bookdown","yaml","dplyr","ggplot2","knitr"),
+            repos="https://cloud.r-project.org")'
+\end{lstlisting}
+
+\subsection*{3.2\ Commands to reproduce every figure and table}
+\begin{lstlisting}[language=bash]
+# (a) Run the full pipeline end-to-end. Reads configs/config.yaml,
+#     writes results/{logs,tables,figures}/.
+python run_pipeline.py --config configs/config.yaml
+
+# (b) Compile the SL report PDF (twice for cross-references).
+cd report
+pdflatex -interaction=nonstopmode SL_Report.tex
+pdflatex -interaction=nonstopmode SL_Report.tex
+cd ..
+
+# (c) Optional: rerun the R sanity check (independent reimplementation).
+Rscript -e 'rmarkdown::render("rsanity/sanity_check.Rmd",
+            output_format="bookdown::pdf_document2")'
+
+# (d) Compile this reproducibility sheet.
+cd repro
+pdflatex -interaction=nonstopmode REPRO_SL.tex
+\end{lstlisting}
+
+\subsection*{3.3\ Data paths}
+\texttt{sklearn.datasets.fetch\_covtype()} is called by
+\texttt{src/data\_loader.py} on first run; the dataset (\textasciitilde\,75\,MB)
+caches to \texttt{data/covtype\_cache.npz}. No manual download is required;
+the script will fetch from UCI if no cache is present.
+
+\subsection*{3.4\ Random seeds}
+A single seed --- \texttt{seed = 7641} (the course number) --- is set globally
+in \texttt{configs/config.yaml} and propagated to:
+\texttt{numpy.random.seed}, \texttt{random.seed},  
+
+\texttt{torch.manual\_seed}, \texttt{sklearn.utils.check\_random\_state},
+the \texttt{random\_state} argument of every
+\texttt{StratifiedShuffleSplit}/\texttt{StratifiedKFold}, and the
+\texttt{set.seed()} call in 
+
+\texttt{rsanity/sanity\_check.Rmd}. Re-running on
+a clean checkout reproduces every reported number to within floating-point
+precision on the same Python and \texttt{scikit-learn} versions; minor
+\textasciitilde\,$10^{-3}$ drift may appear across BLAS implementations
+(MKL vs.\ OpenBLAS) on the kernel SVM and MLP runs.
+
+\subsection*{3.5\ Outputs landing locations}
+\begin{itemize}[leftmargin=*,nosep]
+  \item \texttt{results/logs/} --- run logs, leakage-probe outputs, timing,
+        and the locked \texttt{HYPOTHESIS.md} hash.
+  \item \texttt{results/tables/table\_grid\_*.csv} --- per-learner CV-grid
+        results with fold mean and std (one CSV per learner).
+  \item \texttt{results/tables/table\_per\_class\_*.csv} --- per-class
+        precision/recall/F1 on the held-out 4{,}000-row test set.
+  \item \texttt{results/tables/table\_final\_scores.csv} --- the headline
+        leaderboard.
+  \item \texttt{results/figures/*.png} --- class balance, learning curves,
+        complexity curves, confusion matrices, runtime, NN epoch loss.
+  \item \texttt{report/SL\_Report.pdf} --- the compiled report.
+  \item \texttt{rsanity/sanity\_check.pdf} --- the optional R cross-check
+        (independent implementation, not required for grading).
+\end{itemize}
+
+\section*{4.\ Full-data EDA summary}
+The full UCI Covertype dataset (\texttt{sklearn.datasets.fetch\_covtype})
+contains 581{,}012 rows, 54 features (10 continuous cartographic +
+4 binary wilderness-area indicators + 40 binary soil-type indicators), and
+seven cover-type classes. Class distribution and continuous-feature
+summaries follow.
+
+\begin{table}[h]\centering
+\caption{Full Covertype class distribution. Class-frequency ratio across
+the poles is $283{,}301 / 2{,}747 \approx 103{:}1$.}
+\begin{tabularx}{0.85\linewidth}{Xrr}
+\toprule
+\textcolor{denimdark}{\textbf{Class}} & \textbf{Count} & \textbf{Share (\%)} \\
+\midrule
+1 Spruce/Fir          & 211{,}840 & 36.46 \\
+2 Lodgepole Pine      & 283{,}301 & 48.76 \\
+3 Ponderosa Pine      &  35{,}754 &  6.15 \\
+4 Cottonwood/Willow   &   2{,}747 &  0.47 \\
+5 Aspen               &   9{,}493 &  1.63 \\
+6 Douglas-fir         &  17{,}367 &  2.99 \\
+7 Krummholz           &  20{,}510 &  3.53 \\
+\midrule
+Total                 & 581{,}012 & 100.00 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[h]\centering
+\caption{Full-data continuous-feature summary. Elevation is in metres,
+Aspect/Slope in degrees, Hillshade columns on a 0--255 byte range, the three
+horizontal-distance columns in metres.}
+\begin{tabularx}{0.95\linewidth}{Xrrrr}
+\toprule
+\textcolor{denimdark}{\textbf{Feature}} & \textbf{min} & \textbf{max} & \textbf{mean} & \textbf{std} \\
+\midrule
+Elevation                   & 1859 & 3858 & 2959 & 280 \\
+Aspect                      &    0 &  360 &  155 & 112 \\
+Slope                       &    0 &   66 &   14 &   7 \\
+Hillshade\_9am              &    0 &  254 &  212 &  27 \\
+Hillshade\_Noon             &    0 &  254 &  223 &  20 \\
+Hillshade\_3pm              &    0 &  254 &  142 &  38 \\
+Horiz.\ Dist.\ Hydrology    &    0 & 1397 &  269 & 212 \\
+Horiz.\ Dist.\ Roadways     &    0 & 7117 & 2350 & 1559 \\
+Horiz.\ Dist.\ Fire Points  &    0 & 7173 & 1980 & 1325 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The 44 binary indicators (4 wilderness areas, 40 soil types) are
+zero-or-one columns; each row has exactly one wilderness flag set and
+exactly one soil-type flag set, so the effective categorical cardinality
+is $4 \times 40 = 160$ wilderness-by-soil cells. The continuous columns
+are not Gaussian (Elevation is bimodal at the two major timberline bands;
+Hillshade\_3pm is right-skewed by deep-shadow zero values), which informs
+the choice to use $z$-score standardisation rather than Box--Cox.
+
+\section*{5.\ Sampled-data EDA summary}
+The 20{,}000-row stratified subsample (used in every experiment) preserves
+the full-data class proportions to within $\pm 0.01$ percentage points by
+construction. Continuous-feature moments match the full data within $\pm
+1\%$ on each of mean, std, min, and max --- the expected behaviour of
+stratification on labels combined with representative random sampling on
+features.
+
+\begin{table}[h]\centering
+\caption{Sampled-data ($n{=}20{,}000$) class distribution.}
+\begin{tabularx}{0.85\linewidth}{Xrr}
+\toprule
+\textcolor{denimdark}{\textbf{Class}} & \textbf{Count} & \textbf{Share (\%)} \\
+\midrule
+1 Spruce/Fir          & 7{,}292 & 36.46 \\
+2 Lodgepole Pine      & 9{,}751 & 48.76 \\
+3 Ponderosa Pine      & 1{,}231 &  6.16 \\
+4 Cottonwood/Willow   &      95 &  0.47 \\
+5 Aspen               &     327 &  1.64 \\
+6 Douglas-fir         &     598 &  2.99 \\
+7 Krummholz           &     706 &  3.53 \\
+\midrule
+Total                 & 20{,}000 & 100.00 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[h]\centering
+\caption{Sampled-data continuous-feature summary ($n{=}20{,}000$).}
+\begin{tabularx}{0.95\linewidth}{Xrrrr}
+\toprule
+\textcolor{denimdark}{\textbf{Feature}} & \textbf{min} & \textbf{max} & \textbf{mean} & \textbf{std} \\
+\midrule
+Elevation                   & 1860 & 3858 & 2960 & 281 \\
+Aspect                      &    0 &  360 &  155 & 112 \\
+Slope                       &    0 &   65 &   14 &   7 \\
+Hillshade\_9am              &   68 &  254 &  212 &  27 \\
+Hillshade\_Noon             &    0 &  254 &  223 &  20 \\
+Hillshade\_3pm              &    0 &  252 &  143 &  38 \\
+Horiz.\ Dist.\ Hydrology    &    0 & 1383 &  269 & 211 \\
+Horiz.\ Dist.\ Roadways     &    0 & 7023 & 2350 & 1559 \\
+Horiz.\ Dist.\ Fire Points  &    0 & 6990 & 1980 & 1325 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A subsequent stratified 80/20 split of the 20{,}000-row subsample yields a
+16{,}000-row training partition and a 4{,}000-row test partition that retain
+the same class proportions; the held-out test set contains
+$\{1459, 1950, 246, 19, 65, 120, 141\}$ examples per class respectively,
+which is the per-class support reported alongside precision/recall/F1 in
+the main report's per-class table.
+
+\section*{6.\ Exact sampling procedure}
+
+The 20{,}000-row working subsample is drawn from the 581{,}012-row UCI
+Covertype dataset via a two-stage stratified protocol, both stages seeded
+with \texttt{seed = 7641}:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Stage 1 (sample).} A single-fold
+        \texttt{StratifiedShuffleSplit(n\_splits=1, train\_size=20000,
+        random\_state=7641)} draws \emph{exactly} 20{,}000 row-indices from
+        the 581{,}012 full rows, stratified on the seven-class label
+        column. Counts per class are preserved to within one row of the
+        nearest integer realisation of full-data proportions; the resulting
+        per-class counts are as in Table 4 above.
+  \item \textbf{Stage 2 (held-out test split).} A second
+        \texttt{StratifiedShuffleSplit(n\_splits=1, 
+        
+        test\_size=0.20,
+        random\_state=7641)} on the 20{,}000-row sample produces a 16{,}000-row training partition and a 4{,}000-row test partition,
+        again stratified on the label.
+\end{enumerate}
+
+\noindent\textbf{Standardisation contract.} The \texttt{StandardScaler} for
+the ten continuous columns is fit \emph{only} on the 16{,}000-row training
+partition and applied to both train and test. The 44 binary indicator
+columns pass through unchanged. The whole pipeline is encoded in
+\texttt{src/data\_loader.py} so no learner can accidentally see the test
+partition during tuning, and no scaler statistic ever sees a test row.
+
+\noindent\textbf{Tuning protocol.} Every learner's hyperparameter grid is
+searched under stratified $k$-fold CV on the 16{,}000-row training
+partition only; the test partition is sealed until the held-out evaluation
+in \S\,V of the main report. Each of the five folds preserves the same
+class proportions as the 20k sample. The SVM uses $k{=}3$ folds on a further
+stratified 8{,}000-row subsample of the 16{,}000-row training partition
+for tractability (RBF kernel evaluations scale super-linearly in $n$); the
+final SVM model is refit on the full 16{,}000-row training partition with
+the best hyperparameters.
+
+\noindent\textbf{Leakage controls.} Three probes run before any final
+number is believed: a stratified 
+
+\texttt{DummyClassifier} (chance-floor
+verification), a shuffled-label retrain of a depth-8
+
+\texttt{DecisionTreeClassifier} (shortcut-information verification), and a
+direct \texttt{numpy.intersect1d} on train/test index arrays at split time
+(disjointness verification). Observed values:
+$\text{Dummy}_{\text{acc}}{=}0.372$,
+$\text{Dummy}_{\text{macro-F1}}{=}0.150$,
+$\text{Shuffled-DT}_{\text{acc}}{=}0.484$,
+$\text{Shuffled-DT}_{\text{macro-F1}}{=}0.106$,
+$|\text{train} \cap \text{test}|{=}0$.
+All three agree with the no-leakage null.
+
+\section*{7.\ Hardware and software versions used to generate the submission}
+\begin{itemize}[leftmargin=*,nosep]
+  \item OS: Ubuntu 22.04 LTS (kernel 6.5)
+  \item CPU: 4-core x86\_64; no GPU used (PyTorch on CPU device)
+  \item Python: 3.11.6
+  \item Key packages: \texttt{numpy 1.26.x}, \texttt{scikit-learn 1.4.x},
+        \texttt{torch 2.2.x (CPU)}, \texttt{pandas 2.2.x},
+        \texttt{matplotlib 3.8.x}, \texttt{pyyaml 6.x}
+  \item R: 4.4.1; \texttt{caret 6.0}, \texttt{rpart 4.1}, \texttt{kknn 1.3.1},
+        \texttt{kernlab 0.9}, \texttt{nnet 7.3}, \texttt{rmarkdown 2.27},
+        \texttt{bookdown 0.40}
+  \item LaTeX: TeX Live 2024 / TinyTeX with the IEEEtran conference
+        document class (\texttt{IEEEtran.cls v1.8b})
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,105 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{wolpert1996nfl,blackard1999}
+\citation{blackard1999}
+\citation{blackard1999}
+\citation{ruder2017overview,loshchilov2019adamw}
+\citation{ruder2017overview,loshchilov2019adamw}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{I}{1}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Hypothesis and Method}{1}{section.2}\protected@file@percent }
+\newlabel{sec:method}{{II}{1}{Hypothesis and Method}{section.2}{}}
+\citation{sokolova2009pra}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Class distribution --- full Covertype versus the stratified $n{=}20{,}000$ subsample. Stratification preserves the long tail: the Cottonwood/Willow share stays at $\approx $0.47\% (so a 4{,}000-row test split still contains $\approx $19 minority examples, enough for per-class precision/recall to mean something rather than collapse to 0/1).}}{2}{table.caption.1}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:eda_class}{{I}{2}{Class distribution --- full Covertype versus the stratified $n{=}20{,}000$ subsample. Stratification preserves the long tail: the Cottonwood/Willow share stays at $\approx $0.47\% (so a 4{,}000-row test split still contains $\approx $19 minority examples, enough for per-class precision/recall to mean something rather than collapse to 0/1)}{table.caption.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Continuous-feature summary on the 20k subsample (matches the full distribution to within $\pm 1\%$ in every moment, which is the point of stratified sampling on labels but representative random sampling on features). Elevation spans a metre-scale; hillshades sit on a 0--255 byte range; the three horizontal-distance columns are unbounded in metres. Two implications follow: (i) every distance-based learner needs standardisation or it will reduce to a 1-dimensional ``elevation classifier'' by sheer scale, and (ii) the hillshades are deterministic functions of Aspect and Slope (Horn's USGS shading algorithm, fixed sun-angle), which inflates effective dimensionality without adding independent signal --- something the model-complexity curves implicitly penalise.}}{2}{table.caption.2}\protected@file@percent }
+\newlabel{tab:eda_continuous}{{II}{2}{Continuous-feature summary on the 20k subsample (matches the full distribution to within $\pm 1\%$ in every moment, which is the point of stratified sampling on labels but representative random sampling on features). Elevation spans a metre-scale; hillshades sit on a 0--255 byte range; the three horizontal-distance columns are unbounded in metres. Two implications follow: (i) every distance-based learner needs standardisation or it will reduce to a 1-dimensional ``elevation classifier'' by sheer scale, and (ii) the hillshades are deterministic functions of Aspect and Slope (Horn's USGS shading algorithm, fixed sun-angle), which inflates effective dimensionality without adding independent signal --- something the model-complexity curves implicitly penalise}{table.caption.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Experimental Design}{2}{section.3}\protected@file@percent }
+\newlabel{sec:design}{{III}{2}{Experimental Design}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Exploratory data analysis}{2}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:design:eda}{{\mbox  {III-A}}{2}{Exploratory data analysis}{subsection.3.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Class distribution. \emph  {Left}: full Covertype ($n{\approx }581\text  {k}$, log-scaled). \emph  {Right}: stratified 20k subsample. Stratification preserves the long tail (Cottonwood/Willow $\sim $0.47\%) so per-class metrics are not degenerate.}}{2}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:class_balance}{{1}{2}{Class distribution. \emph {Left}: full Covertype ($n{\approx }581\text {k}$, log-scaled). \emph {Right}: stratified 20k subsample. Stratification preserves the long tail (Cottonwood/Willow $\sim $0.47\%) so per-class metrics are not degenerate}{figure.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Data \& split contract}{2}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:design:data}{{\mbox  {III-B}}{2}{Data \& split contract}{subsection.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Learners and locked constraints}{2}{subsection.3.3}\protected@file@percent }
+\newlabel{sec:design:learners}{{\mbox  {III-C}}{2}{Learners and locked constraints}{subsection.3.3}{}}
+\citation{sokolova2009pra}
+\citation{hawkins2004overfit}
+\citation{wolpert1996nfl,ruder2017overview}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Tuning protocol and validation}{3}{subsection.3.4}\protected@file@percent }
+\newlabel{sec:design:tune}{{\mbox  {III-D}}{3}{Tuning protocol and validation}{subsection.3.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Experiments}{3}{section.4}\protected@file@percent }
+\newlabel{sec:exp}{{IV}{3}{Experiments}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Evaluation debug --- leakage probes}{3}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:exp:leakage}{{\mbox  {IV-A}}{3}{Evaluation debug --- leakage probes}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Hyperparameter tuning}{3}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:exp:tune}{{\mbox  {IV-B}}{3}{Hyperparameter tuning}{subsection.4.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Leakage probes. The majority floor for this 20k stratified subsample is $0.488$ (Lodgepole Pine). The dummy classifier's accuracy sits below this because it draws labels with stratified probability rather than always predicting the majority, so it spreads probability mass across all classes.}}{3}{table.caption.4}\protected@file@percent }
+\newlabel{tab:leakage}{{III}{3}{Leakage probes. The majority floor for this 20k stratified subsample is $0.488$ (Lodgepole Pine). The dummy classifier's accuracy sits below this because it draws labels with stratified probability rather than always predicting the majority, so it spreads probability mass across all classes}{table.caption.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Tuning summary --- best CV macro-F1 per learner (mean$\pm $std across folds) and wall-clock seconds spent searching the grid. The 16k training partition is the only data the tuner sees; the 4{,}000-row test set is sealed until \hyperref  [sec:results]{\textcolor {denimbright}{\S  \ref *{sec:results}}}.}}{3}{table.caption.5}\protected@file@percent }
+\newlabel{tab:tune_summary}{{IV}{3}{Tuning summary --- best CV macro-F1 per learner (mean$\pm $std across folds) and wall-clock seconds spent searching the grid. The 16k training partition is the only data the tuner sees; the 4{,}000-row test set is sealed until \secref {sec:results}}{table.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Learning curves}{3}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:exp:lc}{{\mbox  {IV-C}}{3}{Learning curves}{subsection.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Model-complexity curves}{3}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:exp:mc}{{\mbox  {IV-D}}{3}{Model-complexity curves}{subsection.4.4}{}}
+\citation{hawkins2004overfit}
+\citation{hawkins2004overfit}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Learning curves --- macro-F1 vs.\ \emph  {training-set fraction} (\textbf  {not epochs}, hence the shared x-axis across all five learners; the NN per-epoch traces live in \hyperref  [fig:nn_epochs]{\textcolor {denim}{Fig.~\ref *{fig:nn_epochs}}}). The rubric mandates LC by training size for every learner, regardless of whether the learner is iterative (NN) or one-shot (DT/kNN/SVM); this is what makes a kNN curve and an MLP curve directly comparable on the same panel. Solid: 3-fold inner-CV validation; dashed: train. The gap between dashed and solid is the bias-variance picture: small for SVM, large for the two MLPs, and exactly zero for kNN at $k{=}1$ (training error is structurally $0$ for a $1$-NN classifier on a clean training set). For DT and kNN the dashed curves remain near $1.0$ across all sizes (each is allowed to memorise the training partition by construction --- DT with $\text  {ccp}_\alpha {=}10^{-4}$ grows until pure leaves, kNN with $k{=}1$ retrieves exact labels), so the relevant signal in those panels is in the solid line alone\,:-).}}{4}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:learning_curves}{{2}{4}{Learning curves --- macro-F1 vs.\ \emph {training-set fraction} (\textbf {not epochs}, hence the shared x-axis across all five learners; the NN per-epoch traces live in \figref {fig:nn_epochs}). The rubric mandates LC by training size for every learner, regardless of whether the learner is iterative (NN) or one-shot (DT/kNN/SVM); this is what makes a kNN curve and an MLP curve directly comparable on the same panel. Solid: 3-fold inner-CV validation; dashed: train. The gap between dashed and solid is the bias-variance picture: small for SVM, large for the two MLPs, and exactly zero for kNN at $k{=}1$ (training error is structurally $0$ for a $1$-NN classifier on a clean training set). For DT and kNN the dashed curves remain near $1.0$ across all sizes (each is allowed to memorise the training partition by construction --- DT with $\text {ccp}_\alpha {=}10^{-4}$ grows until pure leaves, kNN with $k{=}1$ retrieves exact labels), so the relevant signal in those panels is in the solid line alone\,:-)}{figure.caption.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Train $\to $ CV-val $\to $ held-out test, all on macro-F1 (the rubric-mandated metric). \textbf  {Train} is the model's macro-F1 on the 16k training partition at $100\%$ training fraction (final fit, no resampling); \textbf  {CV-val} is the mean$\pm $std across 5 stratified folds during tuning (SVM: 3 folds, 8k subsample); \textbf  {Test} is on the sealed 4{,}000-row held-out split touched only once. The train$\to $val gap is the generalisation gap; the val$\to $test gap is the optimism-of-CV gap. Both are informative; both are visible here in one view.}}{4}{table.caption.8}\protected@file@percent }
+\newlabel{tab:final_scores}{{V}{4}{Train $\to $ CV-val $\to $ held-out test, all on macro-F1 (the rubric-mandated metric). \textbf {Train} is the model's macro-F1 on the 16k training partition at $100\%$ training fraction (final fit, no resampling); \textbf {CV-val} is the mean$\pm $std across 5 stratified folds during tuning (SVM: 3 folds, 8k subsample); \textbf {Test} is on the sealed 4{,}000-row held-out split touched only once. The train$\to $val gap is the generalisation gap; the val$\to $test gap is the optimism-of-CV gap. Both are informative; both are visible here in one view}{table.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Model-complexity curves --- train (dashed) vs.\ validation (solid) macro-F1 across each learner's complexity axis. Where dashed climbs and solid plateaus is the Hawkins\,(2004) \cite  {hawkins2004overfit} overfitting plateau: validation gain saturates while training error keeps falling. Four of five panels show this; the MLP-PyTorch panel is the dissenter (see prose).}}{5}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:complexity_curves}{{3}{5}{Model-complexity curves --- train (dashed) vs.\ validation (solid) macro-F1 across each learner's complexity axis. Where dashed climbs and solid plateaus is the Hawkins\,(2004) \cite {hawkins2004overfit} overfitting plateau: validation gain saturates while training error keeps falling. Four of five panels show this; the MLP-PyTorch panel is the dissenter (see prose)}{figure.caption.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Row-normalised confusion matrices. Diagonal mass = per-class recall; off-diagonal mass shows the dominant confusions.}}{5}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:confusions}{{4}{5}{Row-normalised confusion matrices. Diagonal mass = per-class recall; off-diagonal mass shows the dominant confusions}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Held-Out Test Results}{5}{section.5}\protected@file@percent }
+\newlabel{sec:results}{{V}{5}{Held-Out Test Results}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Per-class behaviour}{5}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:results:perclass}{{\mbox  {V-A}}{5}{Per-class behaviour}{subsection.5.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces RBF-SVM per-class metrics on the 4{,}000-row held-out test set. The minority recall problem (classes 4--6) is visible in the recall column and is walked through in \hyperref  [sec:discussion]{\textcolor {denimbright}{\S  \ref *{sec:discussion}}}.}}{5}{table.caption.10}\protected@file@percent }
+\newlabel{tab:perclass_svm}{{VI}{5}{RBF-SVM per-class metrics on the 4{,}000-row held-out test set. The minority recall problem (classes 4--6) is visible in the recall column and is walked through in \secref {sec:discussion}}{table.caption.10}{}}
+\citation{glorot2011}
+\citation{wolpert1996nfl,ruder2017overview}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Wall-clock seconds per learner (log-scaled): tuning total, final fit on 16k, and prediction on the 4{,}000-row test set.}}{6}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:runtime}{{5}{6}{Wall-clock seconds per learner (log-scaled): tuning total, final fit on 16k, and prediction on the 4{,}000-row test set}{figure.caption.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Neural-network loss curves under SGD only ($\mathrm  {momentum}{=}0$, no Nesterov). \emph  {Left}: \texttt  {sklearn.MLPClassifier}. \emph  {Right}: hand-rolled PyTorch MLP with explicit train/val split.}}{6}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:nn_epochs}{{6}{6}{Neural-network loss curves under SGD only ($\mathrm {momentum}{=}0$, no Nesterov). \emph {Left}: \texttt {sklearn.MLPClassifier}. \emph {Right}: hand-rolled PyTorch MLP with explicit train/val split}{figure.caption.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Runtime}{6}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:results:runtime}{{\mbox  {V-B}}{6}{Runtime}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Neural-network learning dynamics}{6}{subsection.5.3}\protected@file@percent }
+\newlabel{sec:results:nn}{{\mbox  {V-C}}{6}{Neural-network learning dynamics}{subsection.5.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Extra credit --- activation function study}{6}{subsection.5.4}\protected@file@percent }
+\newlabel{sec:results:activation}{{\mbox  {V-D}}{6}{Extra credit --- activation function study}{subsection.5.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{6}{section.6}\protected@file@percent }
+\newlabel{sec:discussion}{{VI}{6}{Discussion}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Cross-model synthesis}{6}{subsection.6.1}\protected@file@percent }
+\newlabel{sec:disc:synthesis}{{\mbox  {VI-A}}{6}{Cross-model synthesis}{subsection.6.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Trade-offs and class-level behaviour}{6}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:disc:tradeoff}{{\mbox  {VI-B}}{6}{Trade-offs and class-level behaviour}{subsection.6.2}{}}
+\citation{wolpert1996nfl,ruder2017overview}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Curve-based interpretation}{7}{subsection.6.3}\protected@file@percent }
+\newlabel{sec:disc:curves}{{\mbox  {VI-C}}{7}{Curve-based interpretation}{subsection.6.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}Limitations}{7}{subsection.6.4}\protected@file@percent }
+\newlabel{sec:disc:limits}{{\mbox  {VI-D}}{7}{Limitations}{subsection.6.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-E}}Evidence-based improvements}{7}{subsection.6.5}\protected@file@percent }
+\newlabel{sec:disc:improve}{{\mbox  {VI-E}}{7}{Evidence-based improvements}{subsection.6.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-F}}R sanity check}{7}{subsection.6.6}\protected@file@percent }
+\newlabel{sec:disc:rsanity}{{\mbox  {VI-F}}{7}{R sanity check}{subsection.6.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion}{7}{section.7}\protected@file@percent }
+\newlabel{sec:conclusion}{{VII}{7}{Conclusion}{section.7}{}}
+\citation{blackard1999}
+\bibcite{blackard1999}{1}
+\bibcite{wolpert1996nfl}{2}
+\bibcite{hawkins2004overfit}{3}
+\bibcite{ruder2017overview}{4}
+\bibcite{glorot2011}{5}
+\bibcite{mitchell1997ml}{6}
+\bibcite{burges1998svm}{7}
+\bibcite{sokolova2009pra}{8}
+\bibcite{loshchilov2019adamw}{9}
+\@writefile{toc}{\contentsline {section}{References}{8}{section*.14}\protected@file@percent }
+\gdef \@abspage@last{8}
