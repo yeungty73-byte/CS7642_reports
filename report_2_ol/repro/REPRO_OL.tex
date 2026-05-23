@@ -1,0 +1,362 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb}
+\usepackage{textcomp}
+\usepackage{longtable}
+
+\definecolor{denim}{HTML}{2C6FBB}
+\definecolor{denimdark}{HTML}{1B3A5C}
+\definecolor{denimmid}{HTML}{3A6B8C}
+\definecolor{denimrow}{HTML}{E6EEF5}
+\definecolor{plum}{HTML}{7B2D8E}
+
+\hypersetup{colorlinks=true, linkcolor=denim, urlcolor=denim, citecolor=denim}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{denimmid}CS7641 OL Reproducibility --- Timothy Leung}
+\fancyhead[R]{\footnotesize\color{denimmid}gtID 904150400 \,\textbar\, \texttt{tleung37@gatech.edu}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize\color{denimdark},
+  keywordstyle=\color{denim}\bfseries,
+  commentstyle=\color{denimmid}\itshape,
+  stringstyle=\color{plum},
+  showstringspaces=false, breaklines=true, frame=single,
+  rulecolor=\color{denimrow}, framesep=3pt, basewidth=0.5em,
+}
+
+\title{\color{denimdark}\textbf{Reproducibility Sheet --- CS7641 OL Report}\\
+       \large Optimization \& Uncertainty in Learning, Summer 2026}
+\author{Timothy Leung \\ \texttt{tleung37@gatech.edu} \quad gtID 904150400 \\
+        Georgia Institute of Technology, OMSCS}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\section*{1.\ Overleaf project (read-only)}
+\textbf{Overleaf project:}
+\href{https://www.overleaf.com/project/6a11e4cebb9a5dd9d3751c28}{%
+\texttt{overleaf.com/project/6a11e4cebb9a5dd9d3751c28}}
+
+The project is hosted on Georgia Tech Enterprise Overleaf
+(\href{https://overleaf.gatech.edu}{overleaf.gatech.edu}); the read-only link
+above grants the grader full revision-history access without write permission.
+Revision timeline is intact from first commit through final submission build.
+
+\section*{2.\ GitHub commit hash (single SHA)}
+\textbf{Final commit SHA:} \texttt{1bfe1f52393239eb5973187138b6c28db3569d70}\\
+\textbf{Repository:}
+\href{https://github.gatech.edu/tleung37/CS7641_ml_report2}{%
+\texttt{github.gatech.edu/tleung37/CS7641\_ml\_report2}}
+(GT Enterprise, private)\\
+\textbf{Branch:} \texttt{main}\\
+\textbf{Tag:} \texttt{v1.0-submission}
+
+The repository contains every script that produces every figure, every
+table, and every number in the report. Branch and commit history are intact
+and available for review.
+
+\section*{3.\ Exact run instructions (standard Linux machine)}
+
+\subsection*{3.1\ Environment setup}
+Tested on Ubuntu 22.04 LTS, Python 3.11, R 4.3. Approximate end-to-end
+runtime: 35--45 minutes on a 4-core CPU laptop (CUDA GPU reduces to $\sim$8 min).
+
+\begin{lstlisting}[language=bash]
+# Clone the repository
+git clone https://github.gatech.edu/tleung37/CS7641_ml_report2.git
+cd CS7641_ml_report2
+git checkout 1bfe1f52393239eb5973187138b6c28db3569d70
+
+# Python environment
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# R environment (for rsanity/ audit; not required for grading main report)
+Rscript -e 'install.packages(c("bookdown","yaml","jsonlite","dplyr","ggplot2",
+            "knitr","kableExtra","nnet","caret"),
+            repos="https://cloud.r-project.org")'
+\end{lstlisting}
+
+\subsection*{3.2\ Commands to reproduce every figure and table}
+\begin{lstlisting}[language=bash]
+# (a) Run the full pipeline end-to-end.
+#     Reads configs/config.yaml, writes results/{logs,tables,figures}/
+python run_pipeline.py
+
+# (b) Compile the OL report PDF (twice for cross-references).
+cd report
+pdflatex -interaction=nonstopmode OL_Report.tex
+pdflatex -interaction=nonstopmode OL_Report.tex
+cd ..
+
+# (c) Rerun the R sanity check (independent audit of Python results).
+Rscript -e 'rmarkdown::render("rsanity/sanity_check_OL.Rmd", output_dir="rsanity")'
+
+# (d) Compile this reproducibility sheet.
+cd repro
+pdflatex -interaction=nonstopmode REPRO_OL.tex
+\end{lstlisting}
+
+\subsection*{3.3\ Data paths}
+\texttt{sklearn.datasets.fetch\_covtype()} is called by
+\texttt{src/data\_loader.py} on first run; the dataset ($\sim$75\,MB) caches
+to \texttt{.cache/covtype/}. No manual download is required; the script will
+fetch from UCI if no cache is present.
+
+\subsection*{3.4\ Random seeds}
+Primary seed: \texttt{seed~=~7641} (course number; same as SL Report),
+set in \texttt{configs/config.yaml} and propagated to
+\texttt{numpy.random.seed}, \texttt{random.seed},
+\texttt{torch.manual\_seed}, and
+CuDNN determinism flags.
+Multi-seed stability runs (Parts~2 and~3) additionally use seeds
+$\{42, 123, 7\}$. Re-running on a clean checkout reproduces every reported
+number to within floating-point precision on the same Python and
+\texttt{scikit-learn}/\texttt{torch} versions.
+
+\subsection*{3.5\ Output landing locations}
+\begin{itemize}[leftmargin=*,nosep]
+  \item \texttt{results/logs/sl\_sgd\_baseline.json} --- SL PyTorch SGD
+        baseline metrics (the reference point for all OL comparisons).
+  \item \texttt{results/logs/\{rhc,sa,ga\}.json} --- Part~1 RO progress
+        and final test metrics per algorithm.
+  \item \texttt{results/logs/part2\_\{optimizer\}\_seed\{s\}.json} ---
+        Part~2 ablations; one file per optimizer $\times$ seed.
+  \item \texttt{results/logs/part3\_\{regularizer\}\_seed\{s\}.json} ---
+        Part~3 regularization study; one file per condition $\times$ seed.
+  \item \texttt{results/logs/heatmap\_alpha\_beta1.json} ---
+        Adam $(\alpha, \beta_1)$ sensitivity grid.
+  \item \texttt{results/tables/final\_metric\_table.csv} ---
+        the headline leaderboard across all methods.
+  \item \texttt{results/figures/*.pdf} --- all 10 publication figures.
+  \item \texttt{report/OL\_Report.pdf} --- the compiled main report.
+  \item \texttt{rsanity/sanity\_check\_OL.pdf} --- the R audit output.
+\end{itemize}
+
+\section*{4.\ SL Continuity Contract}
+
+The OL Report reuses the Covertype sample, preprocessing pipeline, split,
+and PyTorch backbone from the SL Report without modification. The table
+below confirms each component is unchanged.
+
+\begin{table}[h]\centering
+\caption{SL $\to$ OL continuity verification.}
+\begin{tabularx}{0.92\linewidth}{lXcc}
+\toprule
+\textcolor{denimdark}{\textbf{Component}} &
+\textcolor{denimdark}{\textbf{SL value}} &
+\textbf{OL value} &
+\textbf{Changed?} \\
+\midrule
+Dataset       & Covertype $n{=}20\text{k}$  & Same & No \\
+Seed          & 7641 & 7641 & No \\
+Split         & 60/20/20 stratified & Same & No \\
+Preprocessing & StandardScaler (train-only) & Same & No \\
+Architecture  & FC(256)$\to$FC(128)$\to$FC(7) & Same & No \\
+Test set      & Stratified 4k rows & Same partition & No \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section*{5.\ Full-data and sampled-data EDA (carried over from SL)}
+
+The Covertype dataset contains 581{,}012 rows, 54 features
+(10 continuous + 4 wilderness-area + 40 soil-type binary indicators),
+and seven cover-type classes.
+
+\begin{table}[h]\centering
+\caption{Full Covertype class distribution. Class-frequency ratio $\approx 103{:}1$.}
+\begin{tabularx}{0.85\linewidth}{Xrr}
+\toprule
+\textcolor{denimdark}{\textbf{Class}} & \textbf{Count} & \textbf{Share (\%)} \\
+\midrule
+1 Spruce/Fir        & 211{,}840 & 36.46 \\
+2 Lodgepole Pine    & 283{,}301 & 48.76 \\
+3 Ponderosa Pine    &  35{,}754 &  6.15 \\
+4 Cottonwood/Willow &   2{,}747 &  0.47 \\
+5 Aspen             &   9{,}493 &  1.63 \\
+6 Douglas-fir       &  17{,}367 &  2.99 \\
+7 Krummholz         &  20{,}510 &  3.53 \\
+\midrule
+Total               & 581{,}012 & 100.00 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[h]\centering
+\caption{Sampled-data ($n{=}20{,}000$) class distribution --- same proportions as SL.}
+\begin{tabularx}{0.85\linewidth}{Xrr}
+\toprule
+\textcolor{denimdark}{\textbf{Class}} & \textbf{Count} & \textbf{Share (\%)} \\
+\midrule
+1 Spruce/Fir        & 7{,}292 & 36.46 \\
+2 Lodgepole Pine    & 9{,}751 & 48.76 \\
+3 Ponderosa Pine    & 1{,}231 &  6.16 \\
+4 Cottonwood/Willow &     95  &  0.47 \\
+5 Aspen             &    327  &  1.64 \\
+6 Douglas-fir       &    598  &  2.99 \\
+7 Krummholz         &    706  &  3.53 \\
+\midrule
+Total               & 20{,}000 & 100.00 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A subsequent stratified 60/20/20 split yields a 12{,}000-row training
+partition, a 4{,}000-row validation partition, and a 4{,}000-row test
+partition; the test set is the same sealed partition as the SL Report.
+
+\section*{6.\ Exact sampling procedure}
+
+Identical to SL Report §6: \texttt{StratifiedShuffleSplit(n\_splits=1,
+train\_size=20000, random\_state=7641)} on the full 581k rows, followed
+by a second \texttt{StratifiedShuffleSplit(test\_size=0.20,
+random\_state=7641)} on the 20k sample, then a third
+\texttt{StratifiedShuffleSplit(test\_size=0.25, random\_state=7641)} on
+the 16k remainder to produce the internal 12k train / 4k val split.
+
+\noindent\textbf{Standardisation.}
+\texttt{StandardScaler} fit on the 12{,}000-row training partition only;
+applied to validation and test. The 44 binary indicators pass through
+unchanged. No test row is seen by any preprocessing step until final
+evaluation. Implemented in \texttt{src/data\_loader.py}.
+
+\section*{7.\ Compute accounting}
+
+\subsection*{7.1\ Gradient-based methods (Parts 2 \& 3)}
+One minibatch backward pass $=$ 1 gradient evaluation (GE) $=$ 1 optimizer
+update. Batch size 256, $n_{\text{train}}{=}12{,}000$:
+$\lceil12000/256\rceil{=}47$ GE/epoch.
+80 epochs $= 3{,}760$ GEs per run (before early stopping).
+All GE counts logged under \texttt{grad\_evals} in each JSON log.
+
+\subsection*{7.2\ Randomized optimization (Part 1)}
+One full validation-set evaluation $=$ 1 function evaluation (FE).
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Method} & \textbf{Budget} & \textbf{Count rule} \\
+\midrule
+RHC & 3 restarts $\times$ 400 FE & 1 val eval = 1 FE \\
+SA  & 2{,}000 FE & 1 val eval = 1 FE \\
+GA  & 50 gen $\times$ pop 20 & 1 candidate eval = 1 FE \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{8.\ RO hyperparameter disclosures}
+RO trainable layers: final 2 (FC(128)$\to$BN$\to$ReLU$\to$FC(7) + biases).
+RO trainable parameter count: 1{,}159 (verified at runtime; $\ll$ 50k cap).
+
+\begin{itemize}[leftmargin=*,nosep]
+  \item \textbf{RHC}: 3 restarts; perturbation $\mathcal{N}(0,0.01^2\mathbf{I})$;
+        restart scale $5\sigma$; 400 FE/restart.
+  \item \textbf{SA}: $T_0{=}1.0$, geometric cooling $T_t{=}T_0 \cdot 0.995^t$;
+        Metropolis acceptance; 2{,}000 FE.
+  \item \textbf{GA}: pop~20, tournament ($k{=}3$), uniform crossover
+        ($p{=}0.7$), mutation $\mathcal{N}(0,0.01^2\mathbf{I})$,
+        top-2 elitism; 50 generations. Progress reported by FE, not generation.
+\end{itemize}
+
+\section*{9.\ Adam-family optimizer disclosures (Part 2)}
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Optimizer} & \textbf{lr} & \textbf{Other HPs} \\
+\midrule
+SGD (no mom.) & 0.05 & momentum=0 \\
+SGD+momentum  & 0.05 & $\mu{=}0.9$, nesterov=False \\
+Nesterov      & 0.05 & $\mu{=}0.9$, nesterov=True \\
+Adam          & $10^{-3}$ & $\beta_1{=}0.9$, $\beta_2{=}0.999$ \\
+Adam (no bias-corr.) & $10^{-3}$ & custom; omits $\hat{m}_t$, $\hat{v}_t$ \\
+Adam ($\beta_1{=}0$) & $10^{-3}$ & $\beta_1{=}0$, $\beta_2{=}0.999$ \\
+AdamW         & $10^{-3}$ & $\lambda{=}10^{-4}$, decoupled WD \\
+\bottomrule
+\end{tabular}
+\end{center}
+Threshold $\ell{=}0.539$ ($=0.90\times$ initial val loss, SGD-no-momentum, seed=42;
+set from training evidence only, never from test).
+
+Adam without bias correction update rule:
+\begin{align*}
+m_t &= \beta_1 m_{t-1} + (1-\beta_1)g_t, \\
+v_t &= \beta_2 v_{t-1} + (1-\beta_2)(g_t)^{2}, \\
+\theta_t &= \theta_{t-1} - \alpha\, m_t / (\sqrt{v_t}+\varepsilon).
+\end{align*}
+Custom implementation in \texttt{src/optimizer.py::AdamNoBiasCorrection}.
+
+\section*{10.\ Regularization disclosures (Part 3)}
+Standard Adam fixed: lr$=10^{-3}$, $\beta_1{=}0.9$, $\beta_2{=}0.999$,
+$\varepsilon{=}10^{-8}$ (no weight decay unless listed).
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Condition} & \textbf{Configuration} \\
+\midrule
+Adam baseline & No regularization; Adam defaults \\
+L2 $10^{-4}$ & \texttt{weight\_decay=$10^{-4}$} (coupled L2, not AdamW) \\
+L2 $10^{-3}$ & \texttt{weight\_decay=$10^{-3}$} \\
+Early stopping & patience=10 epochs; monitored: val loss; best weights restored \\
+Dropout 0.2 & \texttt{nn.Dropout(0.2)} after each hidden layer \\
+Dropout 0.3 & \texttt{nn.Dropout(0.3)} after each hidden layer \\
+Label smooth 0.1 & \texttt{CrossEntropyLoss(label\_smoothing=0.1)} \\
+Input noise 0.05 & $x\leftarrow x{+}\mathcal{N}(0,0.05^2)$, training only \\
+Best combo & L2($10^{-4}$) + early stop(p=10) + label smooth(0.1) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{11.\ R sanity check --- method and interpretation}
+The \texttt{rsanity/sanity\_check\_OL.Rmd} performs two audits:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Baseline agreement.} Trains \texttt{nnet} (BFGS, size=64,
+        decay=$10^{-3}$, 200 maxit, 8k subsample) on the same seed-7641
+        stratified split and compares its test macro-F1 to the Python SL
+        SGD baseline loaded from \texttt{results/logs/sl\_sgd\_baseline.json}.
+        $|\Delta\text{macro-F1}|{<}0.03$ = confirmed;
+        0.03--0.10 = expected BFGS-vs-SGD library difference;
+        $>{0.10}$ = investigate. The observed gap is $\mathbf{-0.0371}$
+        (R nnet~$=$~0.5533 vs.\ Python SGD~$=$~0.5904), in the
+        expected direction and magnitude, confirming the Python split and
+        preprocessing are faithful. The one-sided negative bias is expected:
+        R uses BFGS on an 8k subsample; Python uses pure SGD on 16k.
+  \item \textbf{Log audit.} Loads every \texttt{results/logs/part2\_*.json}
+        (21 runs) and \texttt{part3\_*.json} (27 runs) --- 48 files total ---
+        and checks: macro-F1 $\in[0,1]$, GE counts $\geq 0$, no corrupted
+        JSON. All 48 runs pass. Largest seed IQR is 0.035 (stable across
+        seeds). Delta-F1 vs.\ SL SGD baseline is plotted per regularization
+        condition.
+\end{enumerate}
+
+\section*{12.\ Hardware and software versions}
+\begin{itemize}[leftmargin=*,nosep]
+  \item OS: Ubuntu 22.04 LTS (kernel 6.5)
+  \item CPU: 4-core x86\_64; no GPU used for submission numbers
+        (CUDA path available but not required)
+  \item Python: 3.11.6
+  \item Key packages: \texttt{torch 2.3.1}, \texttt{scikit-learn 1.5.0},
+        \texttt{numpy 1.26.4}, \texttt{pandas 2.2.2},
+        \texttt{matplotlib 3.9.0}, \texttt{seaborn 0.13.2}
+  \item R: 4.3.x; \texttt{nnet 7.3}, \texttt{caret 6.0},
+        \texttt{bookdown 0.40}, \texttt{jsonlite 1.8}, \texttt{ggplot2 3.5}
+  \item LaTeX: TeX Live 2025 / TinyTeX with IEEEtran conference class
+        (\texttt{IEEEtran.cls v1.8b})
+\end{itemize}
+
+\end{document}

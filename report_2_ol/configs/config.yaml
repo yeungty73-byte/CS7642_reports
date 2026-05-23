@@ -1,0 +1,68 @@
+# report_2_ol/configs/config.yaml
+# CS7641 OL Report — Summer 2026 | Timothy Leung (tleung37)
+# Mirrors report_1_sl/configs/config.yaml structure.
+experiment:
+  seed: 7641          # same seed as SL Report (Git seed)
+  seeds_stability: [42, 123, 7]  # seeds for Part 2/3 multi-seed runs
+
+data:
+  sample_size: 20000
+  test_size: 0.20     # 80/20 stratified — same as SL
+  val_size: 0.20      # of the 80%: yields 60/20/20 overall
+  cv_folds: 5
+  cache_path: .cache/covtype
+
+backbone:
+  # Fixed PyTorch architecture from SL Report (do not modify)
+  hidden: [256, 128]
+  activation: relu
+  dropout: 0.0        # baseline — Part 3 varies this
+  use_batchnorm: true
+  init: kaiming_normal
+
+training:
+  batch_size: 256
+  n_epochs: 80
+  lr_sgd: 0.05        # SL baseline
+  lr_adam: 0.001      # Part 2/3 default
+
+part1_ro:
+  n_final_layers: 2
+  max_params: 50000
+  rhc:
+    n_restarts: 3
+    n_iters_per_restart: 400
+    step_size: 0.01
+  sa:
+    n_iters: 2000
+    T_init: 1.0
+    T_decay: 0.995
+    step_size: 0.01
+  ga:
+    population_size: 20
+    n_generations: 50
+    mutation_std: 0.01
+    crossover_rate: 0.7
+    elitism_k: 2
+
+part2_adam:
+  lr_grid_sgd: [0.01, 0.05, 0.1]
+  lr_grid_adam: [0.0001, 0.001, 0.005]
+  beta1_grid: [0.5, 0.8, 0.9, 0.95]
+  beta2_grid: [0.9, 0.99, 0.999]
+  adamw_weight_decay: 0.0001
+  ell_fraction: 0.90  # threshold = ell_fraction * initial_val_loss
+
+part3_reg:
+  l2_grid: [0.0001, 0.001]
+  dropout_grid: [0.2, 0.3]
+  early_stopping_patience: 10
+  label_smoothing: 0.1
+  input_noise_std: 0.05
+
+paths:
+  data_cache: .cache/covtype
+  results: results/
+  logs: results/logs/
+  figures: results/figures/
+  tables: results/tables/

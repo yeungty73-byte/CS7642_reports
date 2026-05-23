@@ -1,0 +1,24 @@
+{
+  "n_total": 20000,
+  "n_features": 54,
+  "n_classes": 7,
+  "class_counts": {
+    "Spruce/Fir": 7120,
+    "Lodgepole Pine": 9860,
+    "Ponderosa Pine": 1244,
+    "Cottonwood/Willow": 83,
+    "Aspen": 329,
+    "Douglas-fir": 653,
+    "Krummholz": 711
+  },
+  "class_balance_ratio": 118.79518072289157,
+  "missing_values": 0,
+  "split_sizes": {
+    "train": 12000,
+    "val": 4000,
+    "test": 4000
+  },
+  "scaler": "StandardScaler (fit on train only)",
+  "seed": 42,
+  "note": "Same sample/preprocessing as SL Report \u2014 OL comparability preserved."
+}
