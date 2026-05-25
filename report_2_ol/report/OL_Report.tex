@@ -38,6 +38,8 @@
 \definecolor{sienna}{HTML}{B8552E}
 \definecolor{rust}{HTML}{9C4A2A}
 \definecolor{parchment}{HTML}{F4EFE5}
+\definecolor{denim_comp}{HTML}{BB782C}
+\definecolor{plum_comp}{HTML}{408E2D}
 
 \hypersetup{
   colorlinks=true,
@@ -59,9 +61,9 @@
 }
 
 % ----------------------------- internal nav helpers ----------------------
-\newcommand{\figref}[1]{\hyperref[#1]{\textcolor{denim}{Fig.~\ref*{#1}}}}
-\newcommand{\tabref}[1]{\hyperref[#1]{\textcolor{plum}{Table~\ref*{#1}}}}
-\newcommand{\secref}[1]{\hyperref[#1]{\textcolor{denimbright}{\S\ref*{#1}}}}
+\newcommand{\figref}[1]{\hyperref[#1]{\textcolor{denim_comp}{Fig.~\ref*{#1}}}}
+\newcommand{\tabref}[1]{\hyperref[#1]{\textcolor{sage}{Table~\ref*{#1}}}}
+\newcommand{\secref}[1]{\hyperref[#1]{\textcolor{plum}{\S\ref*{#1}}}}
 \newcommand{\backto}[1]{\hfill\hyperref[#1]{\textcolor{denimmid}{\footnotesize $\hookleftarrow$ back}}}
 
 % ----------------------------- running header ----------------------------
@@ -91,6 +93,7 @@ on the Covertype PyTorch Backbone}}
 }
 
 \begin{document}
+\graphicspath{{.../results/figures/}{../results/figures/}}
 \maketitle
 \thispagestyle{plain}
 
@@ -217,7 +220,8 @@ Macro-F1 comparisons remain statistically non-degenerate.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{Xrrr}
 \toprule
-\textcolor{denimdark}{\textbf{Class}} & \textbf{$n$ (OL)} & \textbf{OL \%} & \textbf{SL \%} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Class}} & \textcolor{white}{\textbf{$n$ (OL)}} & \textcolor{white}{\textbf{OL \%}} & \textcolor{white}{\textbf{SL \%}} \\
 \midrule
 1 Spruce/Fir        & 7{,}120 & 35.60 & 36.46 \\
 2 Lodgepole Pine    & 9{,}860 & 49.30 & 48.76 \\
@@ -229,6 +233,32 @@ Macro-F1 comparisons remain statistically non-degenerate.}
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\subsection{Why macro-F1 tracks the training levers that matter}\label{sec:data:metric}
+With CT1 and CT2 together accounting for ${\approx}85\%$ of the 20k sample,
+validation loss and accuracy are dominated by the majority landscape and
+can improve substantially without moving minority-class recall at all.
+Macro-F1 \cite{sokolova2009pra} is the right primary metric for this study
+precisely because it \emph{amplifies} the signal that is otherwise swamped:
+a one-percentage-point change in CT4 (Cottonwood/Willow, $n_\text{train}{\approx}83$)
+carries the same weight in macro-F1 as a one-percentage-point change in
+CT2 (Lodgepole Pine, $n_\text{train}{\approx}9{,}860$).
+This equal weighting is not incidental --- it is the scientific question.
+The OL Report asks which training choices (optimizer, regularizer, RO fine-tuning)
+improve the model's ability to correctly identify the full ecological spectrum,
+not just the common species.
+Validation loss alone cannot answer this: the SL baseline already shows that
+a $0.538$ validation loss coexists with a $0.526$ balanced accuracy ---
+the loss surface is not calibrated to the class distribution.
+Balanced accuracy triangulates by averaging per-class \emph{recall} only;
+macro-F1 averages the harmonic mean of precision and recall per class.
+The two are not redundant: a model can improve balanced accuracy by boosting
+recall at the cost of precision (false positives), while macro-F1 penalises
+that trade.
+Reporting all three --- validation loss, macro-F1, balanced accuracy ---
+ensures that improvements in \emph{optimization speed} (loss), \emph{minority-class
+generalization} (macro-F1), and \emph{recall coverage} (balanced accuracy)
+are tracked independently.
 
 \subsection{PyTorch backbone --- fixed from SL}\label{sec:data:backbone}
 The SL PyTorch SGD-only model is the baseline reference for all OL
@@ -278,7 +308,7 @@ Progress reported by FEs, not generations, per the spec's fairness requirement.
 \subsection{Results}\label{sec:p1:results}
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_ro_progress.pdf}
+\includegraphics[width=\linewidth]{../results/figures/fig_ro_progress.pdf}
 \caption{Part~1 --- best-so-far validation loss vs.\ function evaluations
 (left) and wall-clock time (right) for RHC, SA, and GA.
 RHC (solid) descends steeply in the first 200 FEs then plateaus at the local
@@ -318,8 +348,9 @@ FE budgets are comparable within a factor of 2.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{Xcccc}
 \toprule
-\textcolor{denimdark}{\textbf{Method}} &
-\textbf{Val Loss} & \textbf{Macro-F1} & \textbf{Bal.\ Acc} & \textbf{FEs} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Method}} &
+\textcolor{white}{\textbf{Val Loss}} & \textcolor{white}{\textbf{Macro-F1}} & \textcolor{white}{\textbf{Bal.\ Acc}} & \textcolor{white}{\textbf{FEs}} \\
 \midrule
 SL SGD baseline & $0.538$ & $0.590$ & $0.526$ & --- \\
 RHC (best) & $0.563$ & $0.594$ & $0.530$ & 1{,}203 \\
@@ -362,7 +393,7 @@ initial validation loss, computed from training evidence only, never from test).
 \subsection{Optimizer trajectories}\label{sec:p2:traj}
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_optimizer_trajectories.pdf}
+\includegraphics[width=\linewidth]{../results/figures/fig_optimizer_trajectories.pdf}
 \caption{Part~2 --- validation loss vs.\ GEs (left) and wall-clock time
 (right), all seven variants, seed$=42$.
 The dotted line marks $\ell_{\text{vis}}{=}0.671$, plotted as $90\%$ of
@@ -399,11 +430,13 @@ Bold = best per column.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{Xcccc}
 \toprule
-\textcolor{denimdark}{\textbf{Optimizer}} &
-\textbf{Val Loss} & \textbf{Macro-F1} & \textbf{GEs-to-$\ell$} & \textbf{GEs tot.} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Optimizer}} &
+\textcolor{white}{\textbf{Val Loss}} & \textcolor{white}{\textbf{Macro-F1}} &
+\textcolor{white}{\textbf{GEs-to-$\ell$}} & \textcolor{white}{\textbf{GEs tot.}} \\
 \midrule
 SGD (no mom.)  & $0.551$ & $0.566$ & $3{,}760$ & $3{,}760$ \\
-SGD+momentum   & $0.506$ & $0.643$ & $940$    & $3{,}760$ \\
+SGD+mom.       & $0.506$ & $0.643$ & $940$    & $3{,}760$ \\
 Nesterov       & $0.508$ & $0.615$ & $940$    & $3{,}760$ \\
 Adam           & $0.489$ & $0.657$ & $470$    & $3{,}760$ \\
 Adam (no bias) & $0.489$ & $0.670$ & $470$    & $3{,}760$ \\
@@ -417,7 +450,7 @@ Adam ($\beta_1{=}0$) & $0.494$ & $0.666$ & $470$ & $3{,}760$ \\
 \subsection{Sensitivity heatmap and seed stability}\label{sec:p2:heatmap}
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_sensitivity_heatmap.pdf}
+\includegraphics[width=\linewidth]{../results/figures/fig_sensitivity_heatmap.pdf}
 \caption{Adam $(\alpha,\beta_1)$ sensitivity heatmap (30-epoch coarse grid;
 lower = better validation loss).
 A broad flat region at lr$\in[10^{-3},5\times10^{-3}]$ and $\beta_1\in[0.8,0.95]$
@@ -427,7 +460,7 @@ diverges (val loss $>0.66$) showing the learning-rate floor.}
 \end{figure}
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_seed_stability.pdf}
+\includegraphics[width=\linewidth]{../results/figures/fig_seed_stability.pdf}
 \caption{Median $\pm$ IQR across three seeds per optimizer.
 Adam-family variants have tighter bands than SGD variants, the stability
 advantage the SL Report attributed to adaptive scaling
@@ -466,7 +499,7 @@ regularizer, and best regularization combination.
 \subsection{Results}\label{sec:p3:results}
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_regularization.pdf}
+\includegraphics[width=\linewidth]{../results/figures/fig_regularization.pdf}
 \caption{Part~3 --- validation-loss trajectories (left) and final test Macro-F1
 median $\pm$ IQR across three seeds (right).
 Dropout ($p{=}0.2$) and early stopping show the clearest Macro-F1 improvements.
@@ -478,7 +511,7 @@ that calibration and discrete class decisions are separable outcomes
 \end{figure}
 
 \begin{figure}[t]\centering
-\includegraphics[width=0.9\linewidth]{./results/figures/fig_train_val_gap.pdf}
+\includegraphics[width=0.9\linewidth]{../results/figures/fig_train_val_gap.pdf}
 \caption{Train--validation loss gap at the budget end.
 Early stopping and dropout narrow the gap most; label smoothing inflates
 the raw loss gap because the CE loss is computed on smoothed targets during
@@ -542,8 +575,9 @@ set on the same held-out 4{,}000-row split.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{Xcccc}
 \toprule
-\textcolor{denimdark}{\textbf{Method}} &
-\textbf{Val Loss} & \textbf{Macro-F1} & \textbf{Bal.\ Acc} & \textbf{GEs+FEs} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Method}} &
+\textcolor{white}{\textbf{Val Loss}} & \textcolor{white}{\textbf{Macro-F1}} & \textcolor{white}{\textbf{Bal.\ Acc}} & \textcolor{white}{\textbf{GEs+FEs}} \\
 \midrule
 SL SGD baseline       & $0.538$ & $0.590$ & $0.526$ & --- \\
 Best RO (RHC, Part~1) & $0.563$ & $0.594$ & $0.530$ & 1{,}203 FE \\
@@ -571,35 +605,59 @@ stable across seeds.
 \subsection{Cross-part synthesis}\label{sec:disc:synthesis}
 The most consistent finding across all four parts is that
 \textbf{optimizer speed} (Part~2) and \textbf{generalization} (Part~3) are
-separable: Adam-family methods converge to lower validation loss faster than
-SGD, but this speed advantage does not reliably lift Macro-F1 on minority
-classes without additional regularization.
+separable: Adam-family methods converge faster, but this speed does not
+reliably lift Macro-F1 on minority classes without regularization.
 The Macro-F1 spread across all seven Part~2 optimizers (range $0.021$) is
-smaller than the Part~3 regularization spread (range $0.033$), empirically
-confirming that regularization has a larger marginal effect on this
-metric on this dataset.
+smaller than the Part~3 regularization spread (range $0.033$).
 
-The \textbf{validation loss vs.\ Macro-F1 decoupling} is the key interpretive
-observation: label smoothing lowers reported CE loss while leaving Macro-F1
-flat; Adam without bias correction reaches $\ell$ faster than Adam but
-achieves identical Macro-F1 by epoch 40; RO reduces validation loss by
-${\approx}0.005$ without improving Macro-F1 beyond fold variance.
-All three cases confirm the FAQ's prediction that probability calibration
-and discrete class decisions are separable outcomes on an imbalanced problem:
-Covertype's minority classes (CT4 Cottonwood/Willow, CT5 Aspen) change label
-predictions only when decision boundaries move, not merely when confidence
-improves.
+This separability is not surprising in retrospect: the SL Report's factor
+analysis showed the Covertype loss surface has an effective rank of
+$\approx5.93$ and three dominant smooth gradient hyperplanes
+(Solar-Azimuth, Terrain-Accessibility, Moisture-Proximity).
+After SL pre-training fixes the backbone on those axes, Part~2's optimizer
+ablation is a \emph{convergence efficiency} contest on an already
+well-conditioned basin --- not a search for qualitatively better solutions.
+The $0.021$ Macro-F1 range across all seven Part~2 optimizers is
+the empirical fingerprint of that basin's smoothness: you can reach its
+floor faster with Adam, but you cannot reach a meaningfully lower floor
+because gradient pre-training already found the dominant-feature subspace.
+Part~3 regularization \emph{does} move the floor because it directly
+addresses the transition-zone minority classes (CT4, CT5) that live at the
+\emph{boundary} of those dominant hyperplanes --- exactly where the SL
+bias--variance analysis predicted generalisation would be hardest.
+
+The \textbf{validation loss vs.\ Macro-F1 decoupling} reinforces this:
+label smoothing lowers reported CE loss while leaving Macro-F1 flat;
+Adam without bias correction reaches $\ell$ faster but achieves identical
+Macro-F1 by epoch~40; RO reduces validation loss by $\approx 0.005$ without
+improving Macro-F1 beyond fold variance.
+All three cases confirm that probability calibration and discrete class
+decisions are separable outcomes: minority classes change their predicted
+label only when decision boundaries move in the transition-zone, not
+merely when majority-class confidence improves.
 
 \subsection{Optimization, generalization, stability, efficiency}\label{sec:disc:ogse}
-These four properties are distinct:
+These four properties are distinct and tell a coherent story about the
+loss surface's shape.
 \textit{Optimization speed}: AdamW $\approx$ Adam $>$ Nesterov $>$ SGD+mom
-$>$ SGD-no-mom (by GEs to $\ell$).
+$>$ SGD-no-mom (GEs to $\ell$).
+The ordering follows directly from the second-moment scaling: adaptive methods
+correct for the heterogeneous gradient scales that Covertype's mixed
+continuous/binary input produces, collapsing the effective condition number
+of the loss surface and arriving at $\ell$ faster.
 \textit{Generalization (Macro-F1)}: best-combo (Part~3) $>$ AdamW $\approx$
 Adam (no bias) $>$ Adam $>$ L2-only $>$ SL baseline.
+The regularizer combo surpasses AdamW alone because it directly penalises
+the over-confident majority-class probabilities that the imbalanced
+Covertype distribution induces, whereas AdamW's weight decay penalises
+weight magnitude without targeting the calibration problem.
 \textit{Seed stability (IQR)}: Adam-family $<$ SGD variants $<$ RO methods.
+Adaptive scaling smooths out the initialisation-sensitive directions; RO's
+high IQR reflects its dependence on the random initial perturbation direction.
 \textit{Compute efficiency (Macro-F1 per GE)}: Part~3 combinations deliver
-the best Macro-F1 per gradient evaluation; RO is least efficient per
-metric unit when measured against Part~2 performance.
+the best Macro-F1 per gradient evaluation; RO is least efficient per metric
+unit because it searches a space that gradient descent has already
+pre-conditioned.
 
 \subsection{Limitations}\label{sec:disc:limits}
 Four limitations bound the conclusions.
@@ -631,6 +689,15 @@ $(128,64)$-ReLU backbone with seed-7641 Covertype features; a dataset with
 different gradient-scale heterogeneity or class structure may rank
 optimizers and regularizers differently.
 \end{enumerate}
+\noindent
+The deeper meta-lesson: on datasets with Covertype's geometry
+(effective rank $\approx 6$, smooth dominant gradient hyperplanes,
+well-conditioned basin after pre-training), the \emph{optimiser}
+is a weak lever for improving minority-class Macro-F1
+(Part~2 range $0.021$), while the \emph{regulariser} is a strong one
+(Part~3 range $0.033$).
+Allocate tuning compute to regularisation first;\, treat optimiser
+selection as a convergence-speed decision, not a generalisation decision.
 
 \subsection{R sanity check}\label{sec:disc:rsanity}
 The \texttt{rsanity/sanity\_check\_OL.Rmd} cross-checks the Python backbone
@@ -650,6 +717,45 @@ The largest per-optimizer/per-regularizer seed IQR is 0.035, indicating
 stability across seeds (no lucky-run artefact).
 
 % =============================================================================
+\subsection{NFL synthesis and what it means for this loss surface}\label{sec:disc:nfl}
+Mitchell (Ch.~9)~\cite{mitchell1997} frames randomised optimisation through the
+No-Free-Lunch (NFL) theorem~\cite{wolpert1996nfl}: no algorithm outperforms
+random search averaged uniformly over all possible objective functions.
+The result of Part~1 is a concrete NFL illustration --- RHC, SA, and GA
+each exploit a different structural assumption about the loss surface,
+and on \emph{this} surface (cross-entropy of a pre-trained MLP in a
+${\approx}1{,}159$-parameter neighbourhood) \emph{none} of them beats the
+Adam-family gradient methods that already reached this neighbourhood.
+The reason is not algorithmic weakness but geometric mismatch: the Adam
+run has already found a basin whose floor is smooth and whose walls are
+steep; the local Lipschitz constant is small, so gradient information is
+maximal and stochastic neighbourhood search adds only noise.
+SA's failure to escape (\secref{sec:p1}) is the clearest evidence of this
+mismatch: geometric cooling at $T_0{=}1.0$, $T_{\text{decay}}{=}0.995$
+collapses the Metropolis acceptance rate within 150 steps, freezing the
+chain at the initial point and confirming that the basin has no explorable
+neighbourhood at the perturbation scale $\Delta\theta{\sim}\mathcal{N}(0,0.01^2)$.
+GA's continued descent (\figref{fig:ro_progress}) shows that population-based
+crossover does explore modestly, but the exploration--exploitation trade-off
+collapses as the population converges to a single low-variance cluster.
+Together, the three RO curves answer the implicit question the introduction
+posed: \emph{is the loss surface after gradient pre-training still amenable
+to derivative-free search?}
+No --- not at this scale, not with these hyper-parameters.
+The NFL theorem says this answer is not universal; a different initialisation,
+a higher-dimensional search space, or a non-smooth loss (e.g., rank-based RL
+reward) would shift the advantage.
+
+The sensitivity heatmap (\figref{fig:heatmap}) adds a complementary view
+of the loss surface: the loss is more sensitive to $\beta_1$ near the
+high-$\beta_1$ boundary (0.95--0.99) than near the centre (0.9), while
+$\alpha$ shows a sharp penalty below $10^{-4}$ but is relatively flat from
+$10^{-3}$ to $5{\times}10^{-3}$.
+This asymmetric loss landscape is exactly the geometry that the NFL theorem
+implies must exist somewhere: the optimiser-agnostic view says ``no free
+lunch''; the learner-aware view says ``here is the expensive neighbourhood
+you should stay out of.''
+
 \section{Conclusion}\label{sec:conclusion}
 
 All three hypotheses are resolved with quantitative evidence.
@@ -685,7 +791,6 @@ the structural class-imbalance asymmetry that cost-sensitive reweighting
 That reweighting experiment, and the OL toolkit that supports it
 (momentum, adaptive optimizers, dropout as class-specific noise injection),
 is the natural next chapter.
-
 
 % =============================================================================
 \section*{AI Use Statement}
@@ -772,3 +877,4 @@ vol.~32, 2019.
 \end{thebibliography}
 
 \end{document}
+
