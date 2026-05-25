@@ -272,10 +272,9 @@ with \texttt{seed = 7641}:
         nearest integer realisation of full-data proportions; the resulting
         per-class counts are as in Table 4 above.
   \item \textbf{Stage 2 (held-out test split).} A second
-        \texttt{StratifiedShuffleSplit(n\_splits=1, 
-        
-        test\_size=0.20,
-        random\_state=7641)} on the 20{,}000-row sample produces a 16{,}000-row training partition and a 4{,}000-row test partition,
+        \texttt{StratifiedShuffleSplit(n\_splits=1, test\_size=0.20,
+        random\_state=7641)} on the 20{,}000-row sample produces a
+        16{,}000-row training partition and a 4{,}000-row test partition,
         again stratified on the label.
 \end{enumerate}
 
@@ -328,3 +327,4 @@ All three agree with the no-leakage null.
 \end{itemize}
 
 \end{document}
+

@@ -16,6 +16,8 @@
 \usepackage{subcaption}
 \usepackage[hidelinks]{hyperref}
 \usepackage{listings}
+\usepackage{microtype}
+\microtypesetup{activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=15,shrink=15}
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 
@@ -32,6 +34,8 @@
 \definecolor{sienna}{HTML}{B8552E}
 \definecolor{rust}{HTML}{9C4A2A}
 \definecolor{parchment}{HTML}{F4EFE5}
+\definecolor{denim_comp}{HTML}{BB782C}
+\definecolor{plum_comp}{HTML}{408E2D}
 
 \hypersetup{
   colorlinks=true,
@@ -53,9 +57,9 @@
 }
 
 % ----------------------------- internal nav helpers ----------------------
-\newcommand{\figref}[1]{\hyperref[#1]{\textcolor{denim}{Fig.~\ref*{#1}}}}
-\newcommand{\tabref}[1]{\hyperref[#1]{\textcolor{plum}{Table~\ref*{#1}}}}
-\newcommand{\secref}[1]{\hyperref[#1]{\textcolor{denimbright}{\S\ref*{#1}}}}
+\newcommand{\figref}[1]{\hyperref[#1]{\textcolor{denim_comp}{Fig.~\ref*{#1}}}}
+\newcommand{\tabref}[1]{\hyperref[#1]{\textcolor{sage}{Table~\ref*{#1}}}}
+\newcommand{\secref}[1]{\hyperref[#1]{\textcolor{plum}{\S\ref*{#1}}}}
 \newcommand{\backto}[1]{\hfill\hyperref[#1]{\textcolor{denimmid}{\footnotesize $\hookleftarrow$ back}}}
 
 % ----------------------------- running header ----------------------------
@@ -84,6 +88,18 @@
 }
 
 \begin{document}
+% ── density knobs (P4-style) ─────────────────────────────────────────────────
+\captionsetup{font=scriptsize,labelfont={bf,scriptsize},
+              labelsep=period,skip=3pt}
+\renewcommand{\arraystretch}{0.88}
+\setlength{\abovecaptionskip}{2pt}
+\setlength{\belowcaptionskip}{0pt}
+\setlength{\floatsep}{4pt}
+\setlength{\textfloatsep}{4pt}
+\setlength{\intextsep}{4pt}
+\setlength{\columnsep}{12pt}
+% ─────────────────────────────────────────────────────────────────────────────
+
 \maketitle
 \thispagestyle{plain}
 
@@ -192,6 +208,21 @@ subsample actually used downstream (\texttt{notebooks/eda\_sample.ipynb}). The
 class-count comparison is in \tabref{tab:eda_class}; the continuous-feature
 range and dispersion summary is in \tabref{tab:eda_continuous}.
 
+\subsection{Feature factor structure}\label{sec:eda:factor}
+PCA on the ten standardised continuous features yields three dominant axes
+accounting for 64.8\% of variance.
+\textbf{PC1} (25.8\%): Solar-Azimuth axis --- Hillshade\_3pm ($\lambda{=}{+}0.595$)
+vs.\ Hillshade\_9am ($\lambda{=}{-}0.474$), encoding the east--west slope face.
+\textbf{PC2} (21.6\%): Terrain-Accessibility --- Slope ($+0.537$) with
+inverse road distance ($-0.390$) and lower midday sun.
+\textbf{PC3} (17.3\%): Moisture-Proximity --- both hydrological distances
+co-load with elevation, encoding high-elevation riparian corridors.
+Effective rank $\approx 5.93$: the hillshade pair alone ($\rho_s{=}{-}0.826$)
+accounts for most redundancy.
+CT4's discriminant anchors on PC3/PC2 jointly
+($\rho_s{=}{-}0.114$ vs.\ elevation, $p{\approx}10^{-58}$);
+see \secref{sec:disc:geom} for the classifier-geometry payoff.
+
 \begin{table}[t]\centering
 \caption{Class distribution --- full Covertype versus the stratified
 $n{=}20{,}000$ subsample. Stratification preserves the long tail: the
@@ -203,7 +234,8 @@ to mean something rather than collapse to 0/1).}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{Xrrr}
 \toprule
-\textcolor{denimdark}{\textbf{Class}} & \textbf{Full} $n$ & \textbf{Full \%} & \textbf{20k sample \%} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Class}} & \textcolor{white}{\textbf{Full}} $n$ & \textcolor{white}{\textbf{Full \%}} & \textcolor{white}{\textbf{20k sample \%}} \\
 \midrule
 1 Spruce/Fir              & 211{,}840 & 36.46 & 36.46 \\
 2 Lodgepole Pine          & 283{,}301 & 48.76 & 48.76 \\
@@ -233,7 +265,8 @@ penalise.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{Xrrr}
 \toprule
-\textcolor{denimdark}{\textbf{Feature}} & \textbf{min} & \textbf{max} & \textbf{$\mu \pm \sigma$} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Feature}} & \textcolor{white}{\textbf{min}} & \textcolor{white}{\textbf{max}} & \textcolor{white}{\textbf{$\mu \pm \sigma$}} \\
 \midrule
 Elevation (m)               & 1860 & 3858 & $2960\pm 281$ \\
 Aspect (deg)                &    0 &  360 & $155\pm 112$ \\
@@ -245,19 +278,40 @@ Horiz.\ Dist.\ Hydrology    &    0 & 1383 & $269\pm 211$ \\
 Horiz.\ Dist.\ Roadways     &    0 & 7023 & $2350\pm 1559$ \\
 Horiz.\ Dist.\ Fire Points  &    0 & 6990 & $1980\pm 1325$ \\
 \bottomrule
-\end{tabularx}
+\end{tabularx}}
 \end{table}
+
+
 
 A dataset-specific observation that motivates the metric choice: classes 4
 (Cottonwood/Willow), 5 (Aspen), and 6 (Douglas-fir) together make up under 5\%
 of the rows but occupy distinct elevation bands --- Cottonwood/Willow below
 2{,}300\,m near riparian soils, Aspen in a 2{,}500--3{,}000\,m mid-band,
-Douglas-fir on dry south-facing slopes. A learner can therefore score $\approx 0.49$
-accuracy by always predicting Lodgepole Pine (the majority class) and still be
-useless for the three classes a forest manager would actually deploy a model
-to detect. Macro-F1 is the rubric-mandated remedy because it averages per-class
-F1 with equal weight regardless of frequency \cite{sokolova2009pra}; accuracy
-and balanced accuracy are reported alongside for triangulation.
+Douglas-fir on dry south-facing slopes.
+A learner can score $\approx 0.49$ accuracy by always predicting Lodgepole Pine
+and remain useless for the three classes a forest manager would actually deploy.
+Each of the three evaluation metrics reveals a different facet of that problem.
+\textbf{Accuracy} counts raw correct predictions: it rewards the 95\% majority
+and obscures the 5\% minority entirely.
+\textbf{Macro-F1} \cite{sokolova2009pra} averages per-class F1 with equal weight
+regardless of frequency: a classifier that never predicts CT4 loses one full
+$1/7 \approx 0.143$ macro-F1 point, making the penalty for ignoring any one
+class equal regardless of how rare it is.
+This is exactly the right signal for a seven-class problem where every cover
+type represents a distinct ecological niche with real-world management stakes.
+\textbf{Balanced accuracy} averages per-class recall without precision:
+it penalises false negatives alone, which is appropriate if the cost of missing
+a minority class exceeds the cost of a false alarm.
+The three metrics together triangulate: a model that scores high on all three
+simultaneously is genuinely useful across the full ecological spectrum;
+a model with high accuracy but low macro-F1 and balanced accuracy is a
+majority-class predictor wearing a classifier's clothing.
+The deliberate stratification that preserves CT4 ($\approx 19$ test instances)
+ensures that even the rarest class contributes non-degenerate per-class metrics
+--- but 19 instances also means each per-class recall estimate carries a
+${\pm}0.1$ standard error, which is why class-level claims are reported with
+that caveat and why the confusions are described directionally rather than as
+precise point estimates.
 
 \subsection{Data \& split contract}\label{sec:design:data}
 Covertype is pulled via \texttt{sklearn.datasets.fetch\_covtype} and cached
@@ -273,7 +327,7 @@ behind a function boundary --- is encoded in \texttt{src/data\_loader.py} so no
 learner can accidentally see the test partition during tuning.
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_class_balance.png}
+\includegraphics[width=\linewidth]{../results/figures/fig_class_balance.png}
 \caption{Class distribution. \emph{Left}: full Covertype ($n{\approx}581\text{k}$,
 log-scaled). \emph{Right}: stratified 20k subsample. Stratification preserves
 the long tail (Cottonwood/Willow $\sim$0.47\%) so per-class metrics are not
@@ -356,9 +410,10 @@ predicting the majority, so it spreads probability mass across all classes.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{lXc}
 \toprule
-\textcolor{denimdark}{\textbf{Probe}} &
-\textcolor{denimdark}{\textbf{Expected}} &
-\textcolor{denimdark}{\textbf{Observed}} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Probe}} &
+\textcolor{white}{\textbf{Expected}} &
+\textcolor{white}{\textbf{Observed}} \\
 \midrule
 Dummy (stratified) acc        & near majority floor & $0.372$ \\
 Dummy macro-F1                & near $1/K \approx 0.143$ & $0.150$ \\
@@ -387,10 +442,11 @@ until \secref{sec:results}.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{lXcc}
 \toprule
-\textcolor{denimdark}{\textbf{Learner}} &
-\textcolor{denimdark}{\textbf{Best params}} &
-\textcolor{denimdark}{\textbf{CV F1 (mean$\pm$std)}} &
-\textcolor{denimdark}{\textbf{Tune (s)}} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Learner}} &
+\textcolor{white}{\textbf{Best params}} &
+\textcolor{white}{\textbf{CV F1 (mean$\pm$std)}} &
+\textcolor{white}{\textbf{Tune (s)}} \\
 \midrule
 DT       & ccp$_\alpha{=}10^{-4}$, depth unrestricted & $0.632\pm 0.028$ & $34.6$ \\
 kNN      & $k{=}1$, uniform weights                  & $0.657\pm 0.014$ & $26.2$ \\
@@ -416,7 +472,7 @@ MLPs at $100\%$, well above the $\approx 0.02$ residual gap that a
 momentum-based optimiser would be expected to leave on the same architecture.
 
 \begin{figure*}[t]\centering
-\includegraphics[width=0.98\textwidth]{./results/figures/fig_learning_curves.png}
+\includegraphics[width=0.98\textwidth]{../results/figures/fig_learning_curves.png}
 \caption{Learning curves --- macro-F1 vs.\ \emph{training-set fraction}
 (\textbf{not epochs}, hence the shared x-axis across all five learners; the
 NN per-epoch traces live in \figref{fig:nn_epochs}). The rubric mandates LC
@@ -463,7 +519,7 @@ panel is itself diagnostic --- absence of overfit is not always a virtue;
 sometimes it is evidence the optimiser cannot use the capacity it was given.
 
 \begin{figure*}[t]\centering
-\includegraphics[width=0.98\textwidth]{./results/figures/fig_complexity_curves.png}
+\includegraphics[width=0.98\textwidth]{../results/figures/fig_complexity_curves.png}
 \caption{Model-complexity curves --- train (dashed) vs.\ validation (solid)
 macro-F1 across each learner's complexity axis. Where dashed climbs and
 solid plateaus is the Hawkins\,(2004) \cite{hawkins2004overfit} overfitting
@@ -489,8 +545,9 @@ are informative; both are visible here in one view.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabularx}{\linewidth}{lcccc}
 \toprule
-\textcolor{denimdark}{\textbf{Learner}} &
-\textbf{Train F1} & \textbf{CV-val F1} & \textbf{Test F1} & \textbf{Test Acc} \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Learner}} &
+\textcolor{white}{\textbf{Train F1}} & \textcolor{white}{\textbf{CV-val F1}} & \textcolor{white}{\textbf{Test F1}} & \textcolor{white}{\textbf{Test Acc}} \\
 \midrule
 SVM (RBF)     & $0.823$ & $0.609{\pm}.027$ & $\mathbf{0.697}$ & $\mathbf{0.801}$ \\
 kNN ($k{=}1$) & $1.000$ & $0.657{\pm}.014$ & $0.669$ & $0.790$ \\
@@ -502,7 +559,7 @@ MLP-PyTorch   & $0.657$ & $0.587{\pm}.020$ & $0.538$ & $0.756$ \\
 \end{table}
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_confusions_all.png}
+\includegraphics[width=\linewidth]{../results/figures/fig_confusions_all.png}
 \caption{Row-normalised confusion matrices. Diagonal mass = per-class recall;
 off-diagonal mass shows the dominant confusions.}
 \label{fig:confusions}\backto{sec:results}
@@ -534,7 +591,8 @@ walked through in \secref{sec:discussion}.}
 \rowcolors{2}{denimrow}{white}
 \begin{tabular}{cccccc}
 \toprule
-\textbf{Class} & \textbf{Name} & \textbf{P} & \textbf{R} & \textbf{F1} & $n$ \\
+\rowcolor{denimdark}
+\textcolor{white}{\textbf{Class}} & \textcolor{white}{\textbf{Name}} & \textcolor{white}{\textbf{P}} & \textcolor{white}{\textbf{R}} & \textcolor{white}{\textbf{F1}} & $n$ \\
 \midrule
 1 & Spruce/Fir         & 0.811 & 0.751 & 0.780 & 1459 \\
 2 & Lodgepole Pine     & 0.799 & 0.876 & 0.836 & 1950 \\
@@ -558,7 +616,7 @@ saving. kNN, by contrast, fits in milliseconds and pays at prediction time
 work in tuning epochs, not at prediction.
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_runtime.png}
+\includegraphics[width=\linewidth]{../results/figures/fig_runtime.png}
 \caption{Wall-clock seconds per learner (log-scaled): tuning total, final fit
 on 16k, and prediction on the 4{,}000-row test set.}
 \label{fig:runtime}\backto{sec:results:runtime}
@@ -574,7 +632,7 @@ visible as the gap in class-1 and class-2 recall versus the sklearn model
 (see \texttt{results/tables/table\_per\_class\_mlp\_pt.csv}).
 
 \begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{./results/figures/fig_nn_epochs.png}
+\includegraphics[width=\linewidth]{../results/figures/fig_nn_epochs.png}
 \caption{Neural-network loss curves under SGD only ($\mathrm{momentum}{=}0$,
 no Nesterov). \emph{Left}: \texttt{sklearn.MLPClassifier} --- a smoothly
 descending training loss reflecting sklearn's internal shuffle + L-BFGS-like
@@ -592,7 +650,7 @@ The stopper fires on the first sustained rise, not the transient spike --- which
 is why training continues past the first spike but halts after the second.
 The persistent train--val gap (${\geq}0.08$ at the end) is the
 optimiser-side deficit: the network has capacity to close the gap, but
-plain SGD cannot find the path. See \tabref{tab:test_scores} and
+plain SGD cannot find the path. See \tabref{tab:final_scores} and
 \texttt{results/tables/table\_per\_class\_mlp\_pt.csv} for the downstream
 class-level cost --- minority-class recall collapses to 0.053 on CT4.}
 \label{fig:nn_epochs}\backto{sec:results:nn}
@@ -615,8 +673,23 @@ and edges tanh on final macro-F1, the dominant-narrative result
 The five-learner leaderboard separates by magnitudes the EDA could not have
 forecast in advance: SVM and kNN within $0.028$ macro-F1 of each other at the
 top, the Decision Tree sitting $0.035$ below them, and the two MLPs landing
-$0.012$ and $0.107$ further down still. The kernel--neighbourhood cluster wins
-where the EDA implied it would: the standardised continuous features
+$0.012$ and $0.107$ further down still.
+Before interpreting these aggregate gaps, consider what macro-F1 is measuring
+at this class distribution.
+With CT1 and CT2 together accounting for ${\approx}85\%$ of test instances,
+the $0.028$ gap is not a statement about the majority landscape --- every
+classifier achieves $F1{>}0.78$ on those two classes.
+It is almost entirely a statement about the three transition-zone minorities:
+CT4 (19 test instances), CT5 (65), CT6 (120).
+The DT's $0.035$ deficit comes overwhelmingly from CT5 ($F1{=}0.31$) and CT6
+($F1{=}0.56$), where axis-aligned splits cannot represent the continuous
+gradient boundaries.
+The MLP-PyTorch's $0.107$ deficit comes from CT4 recall collapsing to $0.053$.
+\emph{Every classifier's macro-F1 rank is determined almost entirely by how
+well it handles the transition-zone minorities, not the 85\% majority.}
+This is the signal macro-F1 is designed to amplify, and accuracy alone would
+have concealed it entirely.
+The kernel--neighbourhood cluster wins where the EDA implied it would: the standardised continuous features
 (elevation, slope, the three hillshades) project the seven classes into bands
 of roughly $200$--$400$\,m elevation width that an RBF kernel of $\gamma{=}0.1$
 carves and a $k{=}1$ neighbourhood vote resolves point-by-point. The Decision
@@ -634,22 +707,33 @@ kind when an optimiser-side handicap is imposed on a problem whose curvature
 is unfavourable to vanilla gradient descent.
 
 \subsection{Trade-offs and class-level behaviour}\label{sec:disc:tradeoff}
-The held-out confusion matrices (\figref{fig:confusions}) and per-class table
-(\tabref{tab:perclass_svm}) locate the $0.028$-point macro-F1 gap between SVM
-and kNN at one class boundary specifically: SVM concedes recall on class 5
-(Aspen) more harshly than kNN does ($0.323$ versus $0.508$) because the RBF
-bandwidth $\gamma{=}0.1$ that smooths kindly across Cottonwood/Willow
-(class 4) also smooths Aspen examples into the dominant Lodgepole Pine basin
-that sits adjacent to Aspen in the elevation--soil projection. kNN with
-$k{=}1$ is the opposite trade: it preserves Aspen recall by refusing to
-average across neighbours but pays for it in noise on classes 1 and 2
-(Spruce/Fir and Lodgepole Pine each lose two points of precision relative to
-SVM). The MLP-PyTorch confusion matrix exhibits the most extreme version of
-the majority-bias mode: class 4 recall collapses to $0.053$ (one of 19
-caught), and the model's $0.792$ macro precision next to a $0.495$ macro
-recall is what happens when an optimiser settles into the dominant
-Lodgepole Pine basin and stops exploring --- the symptom is optimiser-side,
-the architecture has the capacity to do otherwise.
+The $0.028$-point macro-F1 gap between SVM and $k$-NN resolves, at the class
+level, to a precision--recall trade on exactly the transition-zone minorities
+the factor analysis predicts would be hardest.
+SVM loses recall on CT5 (Aspen, $0.323$) and CT4 (Cottonwood, $0.526$) ---
+both sit \emph{between} elevation bands in the Terrain-Accessibility (PC2)
+and Moisture-Proximity (PC3) space.
+The RBF kernel at $\gamma{=}0.1$ smooths across the boundary separating CT4
+from CT6 (Douglas-fir) and the boundary separating CT5 from CT2 (Lodgepole
+Pine) --- correct for the globally smooth elevation gradient, but wrong
+for the locally abrupt transition-zone boundary.
+$k$-NN with $k{=}1$ recovers CT5 recall ($0.508$) by refusing to average:
+each test point gets the label of its nearest training point, honouring local
+transition-zone ecology over dominant-class probability.
+The cost is CT1 and CT2 precision: the same refusal-to-smooth lets
+high-elevation majority-class points vote for nearest neighbours that are
+formally a different species.
+\textbf{This is the bias--variance trade-off in its most ecologically legible
+form}: the data has both globally smooth elevation gradients (where SVM's
+global margin is right) and locally abrupt transition boundaries (where
+$k{=}1$'s non-parametric rule is right).
+Neither classifier wins outright because neither assumption is universally
+correct on this landscape.
+The MLP-PyTorch collapse (CT4 recall $0.053$, one of 19 caught) is the
+limiting case of majority-basin settling: plain SGD without momentum cannot
+navigate the curvature that separates the Cottonwood niche from the Lodgepole
+basin --- the architecture has the capacity, the optimiser does not have the
+momentum to use it.
 
 \subsection{Curve-based interpretation}\label{sec:disc:curves}
 kNN's validation macro-F1 plateaus at the $50\%$ training-fraction mark
@@ -668,6 +752,36 @@ verdict on the chosen bandwidth $\gamma{=}0.1$. Both MLP learning curves keep
 a $\Delta\,\text{train{-}val\,macro-F1}\ge 0.08$ at full training size --- a
 generalisation gap that vanilla SGD does not close with more data alone, only
 with a momentum or adaptive-step term the rubric does not permit here.
+
+\subsection{Confusion matrix structure}\label{sec:disc:cm}
+The off-diagonal pattern in \tabref{tab:perclass_svm} has the three-cluster
+structure the factor analysis (\secref{sec:eda:factor}) predicts.
+CT1$\leftrightarrow$CT2 (Spruce-Fir/Lodgepole) share the high-elevation
+band and differ primarily in soil type --- a 44-dim binary block contributing
+little discriminant power per dimension.
+CT3$\leftrightarrow$CT6 (Ponderosa/Douglas-fir) share mid-elevation
+south-facing slopes; their separator is the slope-angle gradient compressed
+into PC2.
+CT4's low recall (0.526) traces to Douglas-fir's secondary riparian
+population overlapping CT4's PC3 Moisture-Proximity niche.
+These patterns are consistent across all five learners: the bottleneck is
+information content at elevation-band boundaries, not learner choice.
+
+\subsection{Feature structure and classifier geometry}\label{sec:disc:geom}
+The factor structure identified in \secref{sec:eda:factor}
+closes the loop on the classifier ranking observed
+in \tabref{tab:final_scores}.
+SVM's 0.028-point macro-F1 advantage is not incidental: PC1 (Solar-Azimuth)
+and PC3 (Moisture-Proximity) define hyperplanes that an RBF kernel aligns
+with globally, while effective rank 5.93 means the kernel is not fighting
+genuine high dimensionality.
+$k$-NN's competitive $k{=}1$ performance reflects the same moderate intrinsic
+dimensionality, but its lower balanced accuracy exposes vulnerability to the
+$\rho_s{=}{-}0.826$ hillshade pair: Euclidean distance double-counts the
+same solar-geometry information across two dimensions.
+Decision Tree's deficit ($0.750$ vs.\ SVM's $0.801$) reflects its inability
+to represent the smooth Solar-Azimuth gradient without axis-aligned
+threshold cascades \cite{cortes1995svm}.
 
 \subsection{Limitations}\label{sec:disc:limits}
 Three limitations bound the conclusions. \textbf{First}, the SVM tunes on
@@ -715,67 +829,39 @@ patterns from R match the Python results within fold standard deviations.
 
 % =============================================================================
 \section{Conclusion}\label{sec:conclusion}
-RBF-SVM wins this five-learner comparison on the rubric-mandated macro-F1
-metric ($0.697$ vs.\ $0.669$ for kNN); that the runner-up is $k$-NN with
-$k{=}1$ implies a locally simple decision surface on the standardised
-geography features, since a $1$-neighbour rule can only edge richer learners
-when per-class neighbourhoods are nearly non-overlapping. Expensive learners
-(large MLPs, deep trees) recover nothing on top of the kernel and
-neighbourhood methods, which the model-complexity curves already
-foreshadowed when train--validation divergence appeared past DT depth $12$
-and MLP-sklearn architecture $(128, 64, 32)$. The hypothesis verdict per clause: \textbf{Clause 1 (kNN dominates) is
-refuted}, narrowly --- kNN takes the balanced-accuracy crown ($0.658$) but
-loses macro-F1 by 0.028, because the RBF kernel's Gaussian smoothing buys back
-the precision SVM concedes nowhere else; \textbf{Clause 2 (SVM second) is
-refuted upward} --- SVM led outright rather than placed second, an
-informative miss on direction; \textbf{Clause 3 (SGD-only MLPs trail) is
-confirmed unambiguously} --- both MLPs finish in the bottom three on macro-F1,
-and the persistent train-validation gap in \figref{fig:learning_curves} is
-the optimiser-deficit fingerprint the No-Free-Lunch literature predicts
-\cite{wolpert1996nfl,ruder2017overview}.
-
-The class-imbalance reading is sharper than the headline scores suggest. In
-multiclass-classification terms, the dominant error mode across all five
-learners is a Type-II-like miss on minority classes (false-negatives on
-classes 4--6, visible as the recall column in \tabref{tab:perclass_svm}
-trailing the precision column by $0.15$--$0.43$); Type-I-like errors
-(false-positive minority predictions on majority test rows) are
-correspondingly rare. The asymmetry is structural: under macro-F1 with the
-present class frequencies, every learner buys cheap accuracy by predicting
-the majority class confidently and pays for it in minority recall. The
-leakage probes (dummy macro-F1 $0.150$, shuffled-label DT macro-F1 $0.106$,
-$|\text{train} \cap \text{test}|{=}0$) all agree with the no-leakage null,
-the R reimplementation confirms DT and $k$-NN within
-$|\Delta\,\text{macro-F1}| \le 0.03$ ($+0.008$ and $-0.028$), and the larger
-SVM and NN gaps to R ($-0.074$ and $-0.108$) trace to documented
-\texttt{kernlab}-vs-libsvm and \texttt{nnet}-BFGS-vs-SGD optimiser
-differences rather than pipeline error. The single
-most credit-efficient next step grounded in this evidence is cost-sensitive
-reweighting on SVM and the MLPs --- predicted to lift minority recall and
-therefore macro-F1 by 0.02--0.04 at a $\le 0.01$ accuracy cost --- which is
-the experiment the OL report's randomised-optimisation toolkit is positioned
-to run efficiently.
+RBF-SVM leads on macro-F1 ($0.697$ vs.\ $0.669$ for $k$-NN with $k{=}1$).
+\textbf{Clause~1 (kNN dominates) is refuted}~--- $k$-NN wins balanced
+accuracy ($0.658$) but loses macro-F1 by 0.028 because the RBF kernel's
+Gaussian smoothing recovers the precision $k$-NN concedes.
+\textbf{Clause~2 (SVM second) is refuted upward}~--- SVM led outright.
+\textbf{Clause~3 (SGD MLPs trail) is confirmed}~--- both MLPs finish bottom
+three; the persistent train-val gap in \figref{fig:learning_curves}
+is the optimiser-deficit fingerprint the No-Free-Lunch literature
+predicts~\cite{wolpert1996nfl}.
+The dominant error mode across all five learners is a Type-II miss on
+minority classes (recall in \tabref{tab:perclass_svm} trails precision by
+$0.15$--$0.43$; \secref{sec:disc:cm} traces these to the three elevation-band
+boundaries the factor structure predicts).
+Leakage probes confirm pipeline integrity; R reimplementation confirms
+DT/$k$-NN within $|\Delta|{\leq}0.03$; SVM/NN gaps ($-0.074$, $-0.108$)
+trace to \texttt{kernlab}-vs-libsvm and \texttt{nnet}-BFGS-vs-SGD
+optimiser differences (\secref{sec:disc:rsanity}).
+The highest-value next step is cost-sensitive reweighting, predicted to
+lift minority recall and macro-F1 by 0.02--0.04 at $\leq 0.01$ accuracy
+cost --- the experiment the OL toolkit is positioned to run.
 
 % =============================================================================
-\section*{AI Use Statement}
-Background reading on the Forest Cover Type dataset --- the meaning of the
-seven cover-type labels, the cartographic provenance of the Hillshade columns
-as Aspect/Slope-derived shading values under Horn's USGS algorithm, the
-elevation-band intuition for the minority classes (Cottonwood/Willow,
-Aspen, Douglas-fir) --- was sourced in part via Gemini (Google) queries; the
-quantitative claims in this report are independently computed from the UCI
-data and verified against the original benchmark study \cite{blackard1999}.
-Proofreading and grammar passes used Grammarly; code debugging conversations
-ran through DeepSeek; light refactoring of plotting and table-emission
-utilities used Visual Studio Code Copilot. All hypotheses were locked in
-\texttt{notes/HYPOTHESIS.md} before tuning; every reported number was
-re-produced by the student's own runs of the underlying code on the student's
-own hardware; the LaTeX prose was authored by the student with the LLM
-assistance described above and revised in full. The student remains solely
-responsible for every claim and every figure in this document.
+\vspace{-4pt}\section*{AI Use Statement}
+Covertype label meanings, hillshade provenance, and elevation-band intuition
+were sourced via Gemini (Google) queries; all quantitative claims are
+independently computed and verified against the original benchmark
+study~\cite{blackard1999}. Grammarly for proofreading; DeepSeek for code
+debugging; VS Code Copilot for plotting utilities. All hypotheses were locked
+in \texttt{notes/HYPOTHESIS.md} before tuning. The student remains solely
+responsible for every claim and every figure.
 
 % =============================================================================
-\begin{thebibliography}{99}
+\begin{thebibliography}{99}\footnotesize\setlength{\itemsep}{0pt}\setlength{\parsep}{0pt}\setlength{\bibsep}{0pt}
 \bibitem{blackard1999}
 J.~A.~Blackard and D.~J.~Dean,
 ``Comparative accuracies of artificial neural networks and discriminant
@@ -824,6 +910,13 @@ pp.~427--437, 2009.
 I.~Loshchilov and F.~Hutter,
 ``Decoupled weight decay regularization,''
 in \emph{Proc.\ Int.\ Conf.\ Learning Representations (ICLR)}, 2019.
+\bibitem{cortes1995svm}
+C.~Cortes and V.~Vapnik,
+``Support-vector networks,''
+\textit{Machine Learning}, vol.~20, no.~3, pp.~273--297, 1995.
+\url{https://doi.org/10.1007/BF00994018}
+
 \end{thebibliography}
 
 \end{document}
+
