@@ -53,6 +53,7 @@
 \newcommand{\tabref}[1]{\hyperref[#1]{\textcolor{sage}{Table~\ref*{#1}}}}
 \newcommand{\secref}[1]{\hyperref[#1]{\textcolor{plum}{\S\ref*{#1}}}}
 \newcommand{\backto}[1]{\hfill\hyperref[#1]{\textcolor{denimmid}{\footnotesize $\hookleftarrow$ back}}}
+\newcommand{\partref}[2]{\hyperref[#2]{\textcolor{teal}{Part~#1}}}
 
 % ── listings style ────────────────────────────────────────────────────────────
 \usepackage{listings}
@@ -173,7 +174,7 @@ This choice yields 7 class proportions matching the SL Report exactly
 The 60/20/20 train/val/test split is identical to SL and OL.
 For exploratory clustering and DR diagnostics (Parts~1--2), we use the full
 20k scaled sample.
-For downstream NN evaluation (Part~4), all DR transformations are fit on the
+For downstream NN evaluation (\partref{4}{sec:p4}), all DR transformations are fit on the
 training split only and applied to validation/test~\cite{sklearn2024}.
 
 \begin{figure}[!t]
@@ -208,13 +209,13 @@ We fix $n{=}7$ for direct comparison with K-Means and Cover~Type.
   \centering
   \includegraphics[width=\linewidth]{./results/figures/fig_clustering_sweep.pdf}
   \caption{\emph{Left}: inertia and BIC sweeps --- no sharp elbow at $k{=}7$.
-  Centre: silhouette is highest at $k{=}2$ for K-Means; GMM silhouette is
+  \emph{Center}: silhouette is highest at $k{=}2$ for K-Means; GMM silhouette is
   consistently lower, indicating its elliptical components do not match
   distance-based silhouette geometry.
   \emph{Right}: ARI vs.\ Cover~Type labels is low across all $k$, peaking at
   $k{=}3$ for GMM (ARI~$=$~0.119), consistent with the two dominant classes
   (CT1, CT2) and an elevation-driven third grouping.
-  Vertical dashed line = $k{=}7$ (reference).}
+  Vertical \textcolor{sienna}{\emph{dotted}} line = $k{=}7$ (reference).}
   \label{fig:clust_sweep}\backto{sec:p1:params}
 \end{figure}
 
@@ -235,7 +236,7 @@ for how this elevation-band structure reappears in the supervised confusion
 matrices.
 
 \begin{table}[!t]
-\caption{Part~1 clustering metrics on original features ($n{=}20\,000$).
+\caption{\partref{1}{sec:p1} clustering metrics on original features ($n{=}20\,000$).
   \textbf{Best} of the two algorithms bolded per metric.}
 \label{tab:clust_orig}\backto{sec:p1:results}
 \centering\small
@@ -256,7 +257,7 @@ GMM (full, $n{=}7$) & $-$0.007 & 4.087 & 513 & \textbf{0.052} & \textbf{0.131} \
   \centering
   \includegraphics[width=\linewidth]{./results/figures/fig_contingency.pdf}
   \caption{Cluster $\times$ Cover~Type contingency (row-normalised) for K-Means
-  (left) and GMM (right) at $n{=}7$.
+  (\emph{left}) and GMM (\emph{right}) at $n{=}7$.
   K-Means clusters are dominated by CT1/CT2 with minority types spread thinly;
   GMM distributes more across clusters but still fails to isolate CT4 (rarest class).}
   \label{fig:contingency}\backto{sec:p1:results}
@@ -290,8 +291,8 @@ target but avoids information loss at minimal compute cost~\cite{jolliffe2002pca
   \includegraphics[width=\linewidth]{./results/figures/fig_pca_variance.pdf}
   \caption{\emph{Left}: individual EVR for top-20 PCs --- components 1--2 dominate,
   components beyond 14 contribute $<1\%$ each.
-  \emph{Right}: cumulative EVR with 90\,\% (amber dashed) and 95\,\% (sienna dashed)
-  thresholds. $n{=}30$ (plum dotted) captures 99.5\,\%, providing a generous
+  \emph{Right}: cumulative EVR with 90\,\% (\emph{amber dashed}) and 95\,\% (\emph{sienna dashed})
+  thresholds. $n{=}30$ (\emph{plum dotted}) captures 99.5\,\%, providing a generous
   but stable embedding.}
   \label{fig:pca_var}\backto{sec:p2:pca}
 \end{figure}
@@ -332,7 +333,7 @@ doing better than PCA's variance-ordered truncation.
   \centering
   \includegraphics[width=\linewidth]{./results/figures/fig_ica_kurtosis.pdf}
   \caption{\emph{Left}: per-component $|\text{kurtosis}|$ (excess) for 20 ICA components.
-  All exceed 3, confirming non-Gaussian sources.
+  All exceed the \textcolor{amber}{\emph{amber dashed}} $|\kappa|{=}3$ threshold, confirming non-Gaussian sources.
   \emph{Right}: mean $|\text{kurtosis}|$ per seed is nearly constant ($6.01$--$6.08$),
   confirming that total non-Gaussianity is stable across restarts.
   Seeds are plotted as unordered labels (no temporal structure implied).
@@ -364,7 +365,7 @@ main concern for distance-sensitive downstream methods (K-Means, GMM).
   The seed-to-seed similarity of the violins confirms that mean-ratio variance
   (0.0045) is negligible --- falsifying \textbf{H3}'s seed-variability claim.
   \emph{Right}: CDF across seeds shows ${\approx}20\%$ of pairs fall outside
-  the $[0.8,\,1.2]$ corridor (dotted bounds) --- enough distortion to shift
+  the $[0.8,\,1.2]$ corridor (\textcolor{sienna}{\emph{dotted}} bounds) --- enough distortion to shift
   K-Means centroids and widen GMM covariance estimates in projected space,
   explaining RP's $-0.013$ Macro-F1 deficit vs.\ original features
   (\tabref{tab:nn_dr}).}
@@ -405,7 +406,7 @@ RP improves NMI ($+0.078$) but hurts ARI ($-0.025$) --- the same
 distance distortion that benefits K-Means silhouette destroys the
 dominant-variance geometry GMM needs for label-aligned components.
 This algorithm $\times$ DR asymmetry is the core empirical finding of
-Part~3: no single DR method is universally best; the choice depends on
+\partref{3}{sec:p3}: no single DR method is universally best; the choice depends on
 whether the downstream algorithm is distance-sensitive (K-Means) or
 covariance-sensitive (GMM).
 
@@ -544,13 +545,13 @@ was used for visualization only and not for downstream NN evaluation.
   \centering
   \includegraphics[width=\linewidth]{./results/figures/fig_2d_visualization.pdf}
   \caption{2D projections of the 20k Covertype sample (3{,}000-point subsample).
-  \emph{Top row}: PCA-2, coloured by Cover~Type (left) and K-Means cluster
-  (right). CT1/CT2 form overlapping clouds; PCA captures elevation variance
+  \emph{Top row}: PCA-2, coloured by Cover~Type (\emph{left}) and K-Means cluster
+  (\emph{right}). CT1/CT2 form overlapping clouds; PCA captures elevation variance
   but not ecological labels.
   \emph{Bottom row}: UMAP-2 (extra credit; $n_{\text{neighbors}}{=}30$,
   $\text{min\_dist}{=}0.1$, seed~7641). Minority classes CT4, CT5, CT7
   form tight isolated islands in UMAP space that are invisible in PCA-2.
-  K-Means cluster assignments (bottom right) cut across these UMAP islands,
+  K-Means cluster assignments (\emph{bottom right}) cut across these UMAP islands,
   showing elevation-driven clusters do not align with the non-linear
   manifold topology UMAP exposes.}
   \label{fig:2d}\backto{sec:umap}
@@ -595,7 +596,7 @@ that matter for both clustering and downstream NN.
 \subsection{Feature geometry and intrinsic dimensionality}\label{sec:disc:efrank}
 The effective rank of $\approx 5.93$ mentioned in \secref{sec:p2:pca} is
 not just a PCA diagnostic --- it is the load-bearing number for interpreting
-why Part~4 results look the way they do.
+why \partref{4}{sec:p4} results look the way they do.
 The ten continuous cartographic features collapse to six independent axes:
 a Solar-Azimuth axis (PC1, 25.8\%), a Terrain-Accessibility axis (PC2,
 21.6\%), and a Moisture-Proximity axis (PC3, 17.3\%).
@@ -657,13 +658,13 @@ All 10 clustering JSON logs pass range-validity checks in
 \subsection{Confusion matrix structure and elevation-band hypothesis}
 \label{sec:disc:cm}
 The per-class F1 heatmap (\figref{fig:nn_dr}) carries a structural message
-that closes the loop on the Part~1 clustering.
+that closes the loop on the \partref{1}{sec:p1} clustering.
 The dominant MLP error pairs replicate the same confusion structure across
 all four feature spaces: CT1$\leftrightarrow$CT2 (0.226 of Spruce-Fir
 misclassified as Lodgepole), CT3$\leftrightarrow$CT6 (Ponderosa--Douglas-fir
 cross-errors 0.134 and 0.292), and CT5$\to$CT2 (52\% of Aspen as Lodgepole).
 These three confusion clusters map onto the three elevation bands that
-K-Means found in Part~1 --- \emph{high-elevation} (CT1/CT2/CT7),
+K-Means found in \partref{1}{sec:p1} --- \emph{high-elevation} (CT1/CT2/CT7),
 \emph{mid-elevation dry} (CT3/CT6), and \emph{transition-zone minority}
 (CT4/CT5) --- confirming that the bottleneck is not the choice of
 learner but the information content at those class boundaries.
@@ -765,7 +766,7 @@ code debugging conversations ran through DeepSeek;
 light refactoring of plotting and table-emission utilities used Visual Studio
 Code Copilot.
 All hypotheses were locked in \texttt{notes/HYPOTHESIS\_UL.md} before
-running any Part~1--4 experiments; every reported number was re-produced by
+running any \partref{1}{sec:p1}--4 experiments; every reported number was re-produced by
 the student's own runs of the underlying code on the student's own hardware;
 the \LaTeX{} prose was authored by the student with the LLM assistance
 described above and revised in full.
